@@ -1,0 +1,13 @@
+{
+  "name": "onestep-config",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "onestep-public-configs",
+    "database_id": "69a09560-89fb-4dc4-aeeb-82669fde4ebc"
+  }]
+}

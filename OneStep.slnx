@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="OneStep.vcxproj" Id="34a5bd27-7d70-41eb-b90a-b8409f7084a0" />
+</Solution>

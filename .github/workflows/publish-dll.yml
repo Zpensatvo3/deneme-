@@ -1,0 +1,56 @@
+name: Prepare verified OneStep release
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build Onestep run ID from this repository
+        required: true
+      artifact_name:
+        description: DLL artifact name from that run
+        required: true
+        default: Onestep-1.21.11-Windows-x64
+      dll_sha256:
+        description: SHA256 of the exact tested final DLL
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate selected successful build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.build_run_id }}
+        run: |
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GH_REPO/actions/runs/$RUN_ID" > "$RUNNER_TEMP/run.json"
+          jq -e --arg repo "$GH_REPO" '.conclusion == "success" and .event != "pull_request" and .head_repository.full_name == $repo and .path == ".github/workflows/build.yml"' "$RUNNER_TEMP/run.json"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: verified
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.build_run_id }}
+          github-token: ${{ github.token }}
+      - name: Verify exact file and prepare binary-only package
+        env:
+          EXPECTED: ${{ inputs.dll_sha256 }}
+        run: |
+          [[ "$EXPECTED" =~ ^[a-fA-F0-9]{64}$ ]]
+          [[ "$(find verified -type f | wc -l)" -eq 1 ]]
+          [[ -f verified/Onestep.dll && ! -L verified/Onestep.dll ]]
+          printf '%s  %s\n' "$EXPECTED" verified/Onestep.dll | sha256sum --check
+          mkdir package
+          cp verified/Onestep.dll package/Onestep.dll
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Verified-OneStep-DLL
+          path: package/Onestep.dll
+          if-no-files-found: error
+          retention-days: 7
+      - name: Publication instructions
+        run: echo "The verified DLL is available as a workflow artifact."

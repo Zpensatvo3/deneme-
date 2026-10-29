@@ -1,0 +1,39 @@
+# Visual Studio / MSBuild outputs
+/build/
+/dist/
+/out/
+/aqtinstall.log
+/Release/
+/Debug/
+/custom-base/
+/OneStep/
+/.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# Cloudflare Wrangler local state
+/server/.wrangler/
+/server/node_modules/
+/server/.dev.vars*
+/server/.env*
+/server/.credentials/
+/server/worker-configuration.d.ts
+
+# Local signing material must never be committed
+/server/signing-ec.pem
+/server/signing-private.pk8
+/server/signing-public.spki
+
+# Temporary exports and analysis artifacts
+__pycache__/
+*.py[cod]
+*.bak
+*.old
+*.orig
+*.tmp
+*.vmp
+*-bytes.txt
+*-disassembly.txt
+

@@ -1,0 +1,119 @@
+name: Build Onestep
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate infrastructure and source boundaries
+        run: |
+          python scripts/Test-Infrastructure.py
+          python -m unittest discover -s tests -p 'test_repository_hygiene.py' -v
+          python scripts/Test-AimAssistSources.py
+          python scripts/Test-TriggerbotSources.py
+          python scripts/Test-JumpResetSources.py
+      - name: Test public config Worker
+        run: node --test config-service/worker.test.mjs
+      - name: Check original hybrid game bridge offline
+        run: python scripts/Test-HybridBridge.py
+      - name: Verify shared client tick bytecode hooks
+        run: |
+          mkdir -p "$RUNNER_TEMP/client-tick-asm"
+          curl --fail --silent --show-error --location https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.9/asm-9.9.jar -o "$RUNNER_TEMP/client-tick-asm/asm.jar"
+          curl --fail --silent --show-error --location https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar -o "$RUNNER_TEMP/client-tick-asm/asm-tree.jar"
+          python scripts/Test-ClientTickHooks.py --asm-classpath "$RUNNER_TEMP/client-tick-asm/asm.jar:$RUNNER_TEMP/client-tick-asm/asm-tree.jar"
+          python scripts/Test-AutoTotem.py --asm-classpath "$RUNNER_TEMP/client-tick-asm/asm.jar:$RUNNER_TEMP/client-tick-asm/asm-tree.jar"
+          CP="assets/skybridge:$RUNNER_TEMP/client-tick-asm/asm.jar:$RUNNER_TEMP/client-tick-asm/asm-tree.jar"
+          javac --release 17 -cp "$CP" -d "$RUNNER_TEMP" tests/RetiredBridgeTargetsTest.java
+          java -Xverify:all -cp "$RUNNER_TEMP:$CP" RetiredBridgeTargetsTest
+      - name: Compile and run offline tests
+        run: python scripts/Test-Offline.py --jobs 2
+      - name: Exercise GrimUI layout and input without Minecraft
+        run: python scripts/Test-GrimUI.py
+      - name: Test 26.x migration audit helpers without game downloads
+        run: |
+          python -m unittest discover -s tests -p 'test_minecraft*.py' -v
+          for target in 26.1 26.1.1 26.1.2; do
+            python scripts/Test-Minecraft261Offline.py --target "$target"
+          done
+      - name: Check JNI owner isolation in a disposable JVM
+        run: |
+          g++ -std=c++20 -pthread -UNDEBUG -Iinclude/jni -Iinclude/jni/linux tests/jni_owner_jvm_test.cpp \
+            -L"$JAVA_HOME/lib/server" -Wl,-rpath,"$JAVA_HOME/lib/server" -ljvm -o "$RUNNER_TEMP/onestep-jni-owner-test"
+          "$RUNNER_TEMP/onestep-jni-owner-test"
+      - name: Check additional Minecraft target SDKs
+        run: |
+          for target in 1.21.11 26.1 26.1.1 26.1.2; do
+            python scripts/Test-Offline.py --test minecraft_version --test sdk_mappings --minecraft-version "$target" --jobs 2
+          done
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Check Java 25 attach and JVMTI lifecycle without Minecraft
+        run: python scripts/Test-JvmLifecycle.py --java-home "$JAVA_HOME"
+
+  windows-dll:
+    needs: offline-tests
+    runs-on: windows-2025
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - minecraft: '1.21.11'
+            artifact: Onestep-1.21.11-Windows-x64
+            dll: build/minecraft/1.21.11/Onestep.dll
+          - minecraft: '26.1'
+            artifact: Onestep-26.1-Windows-x64
+            dll: build/minecraft/26.1/Onestep.dll
+          - minecraft: '26.1.1'
+            artifact: Onestep-26.1.1-Windows-x64
+            dll: build/minecraft/26.1.1/Onestep.dll
+          - minecraft: '26.1.2'
+            artifact: Onestep-26.1.2-Windows-x64
+            dll: build/minecraft/26.1.2/Onestep.dll
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Build Release x64 with Ninja
+        shell: pwsh
+        run: ./scripts/Build-Release.ps1 -SkipSign -MinecraftVersion '${{ matrix.minecraft }}'
+      - name: Verify unchanged build does not relink
+        shell: pwsh
+        run: |
+          $before = (Get-Item '${{ matrix.dll }}').LastWriteTimeUtc.Ticks
+          ./scripts/Build-Release.ps1 -SkipSign -MinecraftVersion '${{ matrix.minecraft }}'
+          if ((Get-Item '${{ matrix.dll }}').LastWriteTimeUtc.Ticks -ne $before) { throw 'Unchanged build relinked the DLL.' }
+      - name: Publish DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.dll }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MinecraftVersion Condition="'$(MinecraftVersion)' == ''">1.21.11</MinecraftVersion>
+    <MinecraftTargetId Condition="'$(MinecraftVersion)' == '1.21.11'">12111</MinecraftTargetId>
+    <MinecraftTargetId Condition="'$(MinecraftVersion)' == '26.1'">26100</MinecraftTargetId>
+    <MinecraftTargetId Condition="'$(MinecraftVersion)' == '26.1.1'">26101</MinecraftTargetId>
+    <MinecraftTargetId Condition="'$(MinecraftVersion)' == '26.1.2'">26102</MinecraftTargetId>
+    <MinecraftDefines>ONESTEP_MINECRAFT_VERSION=$(MinecraftTargetId);</MinecraftDefines>
+    <MinecraftOutputDir>$(MSBuildProjectDirectory)\build\minecraft\$(MinecraftVersion)\</MinecraftOutputDir>
+  </PropertyGroup>
+  <Target Name="ValidateMinecraftTarget" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(MinecraftVersion)' != '1.21.11' and '$(MinecraftVersion)' != '26.1' and '$(MinecraftVersion)' != '26.1.1' and '$(MinecraftVersion)' != '26.1.2'" Text="Unsupported MinecraftVersion. Choose 1.21.11, 26.1, 26.1.1 or 26.1.2." />
+    <Error Condition="'$(MinecraftTargetId)' == ''" Text="Unsupported MinecraftVersion. Choose 1.21.11, 26.1, 26.1.1 or 26.1.2." />
+    <Error Condition="'$(Platform)' != 'x64'" Text="Minecraft targets require Windows x64." />
+  </Target>
+</Project>
