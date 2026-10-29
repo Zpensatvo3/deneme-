@@ -27,7 +27,6 @@ class pot_refill : public module
 		struct runtime;
 		std::unique_ptr<runtime> runtime_;
 		std::atomic_bool reset_requested{ true };
-		int live_status = 0;
 		int live_health_potions = 0;
 		int live_empty_hotbar = 0;
 	};

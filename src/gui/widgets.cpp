@@ -642,13 +642,8 @@ bool ImGui::OneStepSliderFloat(const char* label, float* value, float minimum, f
 { return gui::option_slider(label, value, minimum, maximum, format, flags); }
 bool ImGui::OneStepSliderInt(const char* label, int* value, int minimum, int maximum, const char* format, ImGuiSliderFlags flags)
 { return gui::option_slider(label, value, minimum, maximum, format, flags); }
-bool ImGui::OneStepSliderFloat2(const char* label, float value[2], float minimum, float maximum, const char* format, ImGuiSliderFlags flags)
-{ return gui::option_range(label, value, minimum, maximum, format, flags); }
-bool ImGui::OneStepSliderInt2(const char* label, int value[2], int minimum, int maximum, const char* format, ImGuiSliderFlags flags)
-{ return gui::option_range(label, value, minimum, maximum, format, flags); }
 bool ImGui::OneStepCombo(const char* label, int* current_item, const char* const items[], int item_count, int popup_max_height_in_items)
 { return gui::option_combo(label, current_item, items, item_count, popup_max_height_in_items); }
 bool ImGui::OneStepColorEdit4(const char* label, float color[4], ImGuiColorEditFlags flags)
 { return gui::option_color(label, color, flags); }
 void ImGui::OneStepSeparatorText(const char* label) { gui::option_section(label); }
-void ImGui::OneStepStaticDescription(const char*, ...) {}

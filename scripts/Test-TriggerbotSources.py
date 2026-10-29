@@ -19,9 +19,9 @@ sources = [
     "src/modules/core/config_fields.hpp", "src/modules/core/config_fields.cpp",
     "src/modules/core/public_config.cpp", "src/services/game/attack_service.hpp",
     "src/services/game/attack_service.cpp", "src/services/game/attack_coordinator.hpp",
-    "src/services/game/attack_coordinator.cpp", "src/services/input/click_tracking.hpp",
+    "src/services/game/attack_coordinator.cpp",
     "src/services/input/input_service.hpp", "src/services/input/input_service.cpp",
-    "src/gui/gui.cpp", "tests/trigger_engine_test.cpp", "tests/trigger_config_test.cpp",
+    "src/gui/gui.cpp", "tests/trigger_config_test.cpp",
     "tests/trigger_input_test.cpp",
     "src/mappings.hpp", "src/services/game/target_service.hpp", "src/services/game/target_service.cpp",
 ]
@@ -31,16 +31,17 @@ for source in sources[:2]:
     includes = re.findall(r'^#include\s+["<]([^">]+)', (ROOT / source).read_text(encoding="utf-8"), re.M)
     assert not any(any(word in include.lower() for word in ("windows", "imgui", "jni", "cache", "mappings")) for include in includes), source
 engine = (ROOT / sources[1]).read_text(encoding="utf-8")
-assert "now + 180" in engine and "now + 250" in engine and "< 150" in engine
-assert "std::max(now, state.confirmation_deadline) + 250" in engine
+engine_header = (ROOT / sources[0]).read_text(encoding="utf-8")
+assert all(token not in engine + engine_header for token in ("weapon_allowed", "begin_cycle", "submission_failed", "struct observation", "struct sampler"))
 adapter = (ROOT / "src/modules/combat/trigger_adapter.cpp").read_text(encoding="utf-8")
 assert "world_bridge::tick_trigger(settings, enabled, state.reset_generation)" in adapter
 assert "submit_trigger_click" not in adapter and "fresh_crosshair_entity" not in adapter
 bridge = (ROOT / "src/bridge/WorldBridge.java").read_text(encoding="utf-8")
 assert all(token in bridge for token in ("tickTrigger", "triggerFresh", "triggerAttack.invoke", "triggerPreparedSlot", "triggerService(8"))
+assert "now - triggerCritical < 150_000_000L" in bridge
 assert "triggerFailed = true" in bridge
 inputs = (ROOT / "src/services/input/input_service.cpp").read_text(encoding="utf-8")
-assert "restore_ticket_tag(id, held)" in inputs and "ledger.needs_validation" in inputs
+assert all(token not in inputs for token in ("restore_ticket_tag", "ledger.needs_validation", "submit_trigger_click", "press_jump_space"))
 assert "mouse_button_state(mouse_button::left" not in inputs
 assert "uniform_" not in engine and "steady_clock" not in engine and "SendInput" not in engine
 assert "prioritize_crits" not in (ROOT / "src/modules/combat/trigger_options.cpp").read_text(encoding="utf-8")
@@ -79,4 +80,4 @@ if options.parser_dir:
     print(f"C++ syntax parsed for {len(sources) - 1} files; no syntax errors. JNI macro mappings require native compilation.")
 else:
     print("C++ syntax parser not requested; structural checks only.")
-print("Trigger source boundaries, timeout constants, project registration and module ids checked. No builds or runtime tests executed.")
+print("Trigger source boundaries, Java critical timing, project registration and module ids checked. No builds or runtime tests executed.")

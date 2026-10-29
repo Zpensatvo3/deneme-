@@ -95,11 +95,19 @@ python -m unittest discover -s tests -p 'test_repository_hygiene.py' -v
 python scripts/Test-AimAssistSources.py
 python scripts/Test-TriggerbotSources.py
 python scripts/Test-JumpResetSources.py
+python scripts/Test-HybridBridge.py
 python scripts/Test-Offline.py --jobs 2
 python scripts/Test-GrimUI.py
 python -m unittest discover -s tests -p 'test_minecraft*.py' -v
 git diff --check
 ```
+
+`Test-HybridBridge.py`, Triggerbot'un gerçek Java kontrolcüsünü de kaynak ve
+gömülü sınıflarla sınar. Yalnız bu kontrol için `python scripts/Test-TriggerbotBridge.py`
+çalıştırılabilir. JDK 17+ ve C++ derleyicisi gerekir (Windows: MSVC Developer
+PowerShell; Linux: clang++ veya g++). Geçici JNI kütüphanesi yalnız koordinatörü
+taklit eder; oyuna bağlanmaz. Dört hedef kimliği için binding protokolü sınanır;
+bu fixture kontrolü gerçek oyun mapping doğrulamasının yerine geçmez.
 
 Her yedi hedef için ayrıca `Test-Offline.py --test minecraft_version --test
 sdk_mappings --minecraft-version <hedef> --jobs 2`, üç 26.x hedefi için

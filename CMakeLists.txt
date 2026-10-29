@@ -43,12 +43,7 @@ endforeach()
 
 # All generated data lives in this build's directory, not the source tree.
 set(_generated "${CMAKE_BINARY_DIR}/generated")
-file(MAKE_DIRECTORY "${_generated}/ui")
-add_custom_command(OUTPUT "${_generated}/ui/spotify_vector_data.hpp"
-  COMMAND Python3::Interpreter "${CMAKE_SOURCE_DIR}/scripts/Build-SpotifyVector.py"
-    --output "${_generated}/ui/spotify_vector_data.hpp"
-  DEPENDS scripts/Build-SpotifyVector.py assets/icons/spotify.svg VERBATIM)
-
+file(MAKE_DIRECTORY "${_generated}")
 set(_bridge_dir "${_generated}/assets/hybrid")
 set(_java_sources)
 set(_java_outputs)
@@ -85,7 +80,7 @@ foreach(_resource IN LISTS _resource_entries)
   list(APPEND _resource_files "${_path}")
 endforeach()
 set_source_files_properties("${_generated}/assets.rc" PROPERTIES OBJECT_DEPENDS "${_resource_files};${CMAKE_SOURCE_DIR}/resource.h;${_contract_stamp}")
-add_custom_target(onestep_generated DEPENDS ${_java_outputs} "${_contract_stamp}" "${_generated}/ui/spotify_vector_data.hpp")
+add_custom_target(onestep_generated DEPENDS ${_java_outputs} "${_contract_stamp}")
 
 add_library(Onestep SHARED ${_sources} "${_generated}/assets.rc")
 add_dependencies(Onestep onestep_generated)

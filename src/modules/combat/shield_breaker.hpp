@@ -28,7 +28,6 @@ class shield_breaker : public module
 		// Runs on Minecraft's window thread before the physical click reaches
 		// GLFW, so the vanilla attack itself is performed with the axe selected.
 		static bool gate_left_click();
-		static bool prepare_for_synthetic_attack();
 		static bool prepare_for_trigger_attack();
 		static int trigger_prepared_slot();
 		static int starting_slot_if_owned(const maps::ClientPlayerEntity& player,

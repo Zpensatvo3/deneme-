@@ -29,6 +29,16 @@ public final class ItemBridgeTest {
         check(b.useExp(pending, true), "wrong thread cannot consume request");
         packet = b.captureExp(); b.stop();
         check(!b.useExp(packet, true) && b.captureExp() == null, "shutdown");
+        ItemBridge controller = new ItemBridge(ItemBridgeTest.class.getClassLoader(), 12111);
+        int start = c.useCount;
+        controller.update(true, true, true, 1, 1);
+        check(c.useCount == start + 1, "controller sends one use");
+        controller.update(true, true, true, 1, 1);
+        check(c.useCount == start + 1, "controller respects timing");
+        controller.update(false, true, true, 20, 20);
+        controller.update(true, true, true, 20, 20);
+        check(c.useCount == start + 2, "disable resets timer");
+        controller.stop();
         System.out.println("PASS Fast EXP bridge lifecycle and ownership (" + args[0] + ")");
     }
 }

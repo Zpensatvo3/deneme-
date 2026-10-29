@@ -67,7 +67,6 @@ namespace modules
 			void set_lyrics_enabled(bool enable_lyrics);
 
 			// Ask the worker to re-scan immediately (used when the toggle flips).
-			void request_refresh();
 
 			now_playing snapshot() const;
 			bool is_running() const { return running.load(std::memory_order_acquire); }

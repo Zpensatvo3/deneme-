@@ -17,17 +17,13 @@ TESTS = {
     "menu_input_policy": ["tests/menu_input_policy_test.cpp"],
     "popup_controls": ["tests/popup_controls_test.cpp", "include/imgui/imgui.cpp", "include/imgui/imgui_draw.cpp",
                        "include/imgui/imgui_widgets.cpp", "include/imgui/imgui_tables.cpp"],
-    "spotify_vector": ["tests/spotify_vector_test.cpp", "include/imgui/imgui.cpp", "include/imgui/imgui_draw.cpp",
-                       "include/imgui/imgui_widgets.cpp", "include/imgui/imgui_tables.cpp"],
     "menu_background_renderer": ["tests/menu_background_renderer_test.cpp", "src/ui/menu_background.cpp", "src/ui/themes_page.cpp",
                                  "include/imgui/imgui.cpp", "include/imgui/imgui_draw.cpp", "include/imgui/imgui_widgets.cpp", "include/imgui/imgui_tables.cpp"],
     "module_runtime": ["tests/module_runtime_test.cpp"],
     "vape_adapter": ["tests/vape_adapter_test.cpp"],
     "aimassist_math": ["tests/aimassist_math_test.cpp"],
-    "trigger_engine": ["tests/trigger_engine_test.cpp", "src/modules/combat/trigger_engine.cpp"],
     "trigger_input": ["tests/trigger_input_test.cpp", "src/services/game/attack_coordinator.cpp"],
-    "jump_reset_engine": ["tests/jump_reset_engine_test.cpp"],
-    "no_jump_delay": ["tests/no_jump_delay_test.cpp"],
+    "input_service": ["tests/input_service_test.cpp"],
     "pot_refill_engine": ["tests/pot_refill_engine_test.cpp"],
     "anti_bot_engine": ["tests/anti_bot_engine_test.cpp"],
     "item_esp_geometry": ["tests/item_esp_geometry_test.cpp"],
@@ -78,9 +74,11 @@ def main():
                          "26.1": 26100, "26.1.1": 26101, "26.1.2": 26102}[args.minecraft_version]
             target_define = f"ONESTEP_MINECRAFT_VERSION={target_id}"
             command += [f"/D{target_define}"] if msvc else [f"-D{target_define}"]
-            if name in ("settings_renderer", "menu_background", "menu_background_renderer", "spotify_vector", "popup_controls"):
+            if name in ("settings_renderer", "menu_background", "menu_background_renderer", "popup_controls"):
                 command += [f"/I{ROOT / 'include'}"] if msvc else ["-I", str(ROOT / "include")]
             if name == "menu_background_renderer" and os.name != "nt":
+                command += ["-I", str(ROOT / "tests/support")]
+            if name == "input_service" and os.name != "nt":
                 command += ["-I", str(ROOT / "tests/support")]
             if name in ("sdk_mappings", "minecraft_version"):
                 platform = "win32" if os.name == "nt" else "linux"

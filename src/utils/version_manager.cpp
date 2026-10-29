@@ -59,7 +59,6 @@ namespace mc
     version get_version() { return current; }
     const char* get_version_name() { return detected_name.c_str(); }
     const char* get_runtime_label() { return runtime_label.c_str(); }
-    bool is_1_21_11() { return current == version::v1_21_11; }
     void set_version(version value)
     {
         current = value;

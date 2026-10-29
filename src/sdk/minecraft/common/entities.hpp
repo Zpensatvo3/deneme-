@@ -125,7 +125,6 @@ namespace maps
     jni::field<jint, ONESTEP_MC_NAME("field_6273")> lastAttackedTicks{ *this };
     jni::field<jint, ONESTEP_MC_NAME("field_6235")> hurtTime{ *this };
     jni::field<jint, ONESTEP_MC_NAME("field_6254")> maxHurtTime{ *this };
-    jni::field<jint, ONESTEP_MC_NAME("field_6228")> jumpingCooldown{ *this };
     // Intermediary mappings.
     jni::method<jfloat, ONESTEP_MC_NAME("method_6032")> getHealth{ *this };
     jni::method<jfloat, ONESTEP_MC_NAME("method_6063")> getMaxHealth{ *this };

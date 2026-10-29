@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier;
 public final class UtilityBridge {
     public static final int FAST_PLACE = 1, SPRINT = 2, FULL_BRIGHT = 3;
     private final ClassLoader loader;
+    private final boolean named;
     private final Class<?> playerType, optionsType;
     private final Field instance, player, world, screen, options;
     private final Method onThread, alive;
@@ -21,9 +22,10 @@ public final class UtilityBridge {
     private volatile boolean stopped;
 
     public UtilityBridge(ClassLoader loader, int target) throws ReflectiveOperationException {
-        if (loader == null || target != 12111)
-            throw new IllegalArgumentException("UtilityBridge requires exact Fabric 1.21.11");
+        if (loader == null || (target != 12111 && target != 26100 && target != 26101 && target != 26102))
+            throw new IllegalArgumentException("UtilityBridge requires an exact supported target");
         this.loader = loader;
+        named = target >= 26100;
         Class<?> client = load("class_310");
         playerType = load("class_746"); optionsType = load("class_315");
         instance = field(client, "field_1700", client, true);
@@ -36,10 +38,49 @@ public final class UtilityBridge {
     }
 
     private Class<?> load(String name) throws ClassNotFoundException {
-        return Class.forName("net.minecraft." + name, false, loader);
+        String mapped = named ? switch (name) {
+            case "class_310" -> "net.minecraft.client.Minecraft";
+            case "class_746" -> "net.minecraft.client.player.LocalPlayer";
+            case "class_315" -> "net.minecraft.client.Options";
+            case "class_638" -> "net.minecraft.client.multiplayer.ClientLevel";
+            case "class_437" -> "net.minecraft.client.gui.screens.Screen";
+            case "class_304" -> "net.minecraft.client.KeyMapping";
+            case "class_1799" -> "net.minecraft.world.item.ItemStack";
+            case "class_1792" -> "net.minecraft.world.item.Item";
+            case "class_1747" -> "net.minecraft.world.item.BlockItem";
+            case "class_1812" -> "net.minecraft.world.item.PotionItem";
+            default -> throw new IllegalArgumentException("Unsupported utility class: " + name);
+        } : "net.minecraft." + name;
+        return Class.forName(mapped, false, loader);
     }
-    private static Field field(Class<?> owner, String name, Class<?> type, boolean isStatic)
+    private String mapped(String name) {
+        if (!named) return name;
+        return switch (name) {
+            case "field_1700" -> "instance";
+            case "field_1724" -> "player";
+            case "field_1687" -> "level";
+            case "field_1755" -> "screen";
+            case "field_1690" -> "options";
+            case "field_1867" -> "keySprint";
+            case "field_1904" -> "keyUse";
+            case "field_1752" -> "rightClickDelay";
+            case "method_18854" -> "isSameThread";
+            case "method_5805" -> "isAlive";
+            case "method_1434" -> "isDown";
+            case "method_48300" -> "canStartSprinting";
+            case "method_5624" -> "isSprinting";
+            case "method_5728" -> "setSprinting";
+            case "method_6115" -> "isUsingItem";
+            case "method_6047" -> "getMainHandItem";
+            case "method_6079" -> "getOffhandItem";
+            case "method_7960" -> "isEmpty";
+            case "method_7909" -> "getItem";
+            default -> throw new IllegalArgumentException("Unsupported utility binding: " + name);
+        };
+    }
+    private Field field(Class<?> owner, String name, Class<?> type, boolean isStatic)
             throws ReflectiveOperationException {
+        name = mapped(name);
         for (Class<?> c = owner; c != null; c = c.getSuperclass()) {
             try {
                 Field f = c.getDeclaredField(name);
@@ -50,8 +91,9 @@ public final class UtilityBridge {
         }
         throw new NoSuchFieldException(name);
     }
-    private static Method method(Class<?> owner, String name, Class<?> result, Class<?>... arguments)
+    private Method method(Class<?> owner, String name, Class<?> result, Class<?>... arguments)
             throws ReflectiveOperationException {
+        name = mapped(name);
         for (Class<?> c = owner; c != null; c = c.getSuperclass()) {
             try {
                 Method m = c.getDeclaredMethod(name, arguments);
@@ -72,6 +114,7 @@ public final class UtilityBridge {
     /** Validate each capability separately; a missing item binding cannot disable Full Bright. */
     public void prepare(int feature) throws ReflectiveOperationException {
         validate(feature);
+        if (named && feature == FULL_BRIGHT) throw new IllegalStateException("Utility feature not available on this target");
         if (stopped) throw new IllegalStateException("UtilityBridge stopped");
         if (prepared[feature]) return;
         if (feature == FAST_PLACE) {

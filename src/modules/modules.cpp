@@ -1,7 +1,6 @@
 #include "module_lifecycle.hpp"
 #include "module_catalog.hpp"
 #include "core/module_registry.hpp"
-#include "../platform/jni/client_dispatcher.hpp"
 #include "../meta_jni.hpp"
 
 void modules::init()
@@ -14,5 +13,4 @@ void modules::shutdown(::cache& cache)
 {
     jni::frame frame{};
     clear_modules(cache);
-	platform::client_dispatcher::clear();
 }

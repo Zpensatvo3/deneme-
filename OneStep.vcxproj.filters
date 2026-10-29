@@ -64,9 +64,6 @@
     <Filter Include="Source Files\src\app">
       <UniqueIdentifier>{C1A100D7-9D96-5A26-9C8A-A4E6CB8B211E}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\src\auth">
-      <UniqueIdentifier>{33F09CCE-575F-5220-BAAF-DAA47EB9E340}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\src\cache">
       <UniqueIdentifier>{45EF5E2C-BDA7-5E9F-9A78-D8EC3A8DAC6D}</UniqueIdentifier>
     </Filter>
@@ -370,9 +367,6 @@
     <Filter Include="Third Party\include\minhook\trampoline.h">
       <UniqueIdentifier>{FD6ECE63-9F43-5B1F-9AED-840C38917DC1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\src\modules\client\settings">
-      <UniqueIdentifier>{E90F41F9-A504-5FBF-8241-0B47F0AEE012}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\src\modules\combat\settings">
       <UniqueIdentifier>{B9CB8704-C38D-5BF5-B9FA-35735C6332C0}</UniqueIdentifier>
     </Filter>
@@ -499,9 +493,6 @@
       <Filter>Source Files\src\maths</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\jni\jni_context.cpp">
-      <Filter>Source Files\src\platform\jni</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\jni\client_dispatcher.cpp">
       <Filter>Source Files\src\platform\jni</Filter>
     </ClCompile>
     <ClCompile Include="src\services\game\hotbar_service.cpp">
@@ -1670,9 +1661,6 @@
     <ClInclude Include="src\services\game\attack_coordinator.hpp">
       <Filter>Header Files\src\services\game</Filter>
     </ClInclude>
-    <ClInclude Include="src\services\input\click_tracking.hpp">
-      <Filter>Header Files\src\services\input</Filter>
-    </ClInclude>
     <ClInclude Include="src\jvmti\jvmti.hpp">
       <Filter>Header Files\src\jvmti</Filter>
     </ClInclude>
@@ -1728,12 +1716,6 @@
       <Filter>Header Files\src\ui</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\item_icon.hpp">
-      <Filter>Header Files\src\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ui\spotify_vector.hpp">
-      <Filter>Header Files\src\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ui\spotify_vector_data.hpp">
       <Filter>Header Files\src\ui</Filter>
     </ClInclude>
     <ClInclude Include="src\sdk\minecraft\common\*.hpp">
@@ -1838,9 +1820,6 @@
     </None>
     <None Include="assets\icons\spotify-2015-seeklogo.png">
       <Filter>Resource Files</Filter>
-    </None>
-    <None Include="assets\icons\spotify.svg">
-      <Filter>Source Files</Filter>
     </None>
     <None Include="src\sdk\minecraft\common\manifest.json">
       <Filter>Header Files\src\sdk\minecraft\common</Filter>

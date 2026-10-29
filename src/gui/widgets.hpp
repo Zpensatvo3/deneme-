@@ -1,7 +1,6 @@
 #pragma once
 
 #include <imgui/imgui.h>
-#include <string>
 
 namespace gui
 {
@@ -47,13 +46,8 @@ namespace ImGui
         const char* format = "%.3f", ImGuiSliderFlags flags = 0);
     bool OneStepSliderInt(const char* label, int* value, int minimum, int maximum,
         const char* format = "%d", ImGuiSliderFlags flags = 0);
-    bool OneStepSliderFloat2(const char* label, float value[2], float minimum, float maximum,
-        const char* format = "%.3f", ImGuiSliderFlags flags = 0);
-    bool OneStepSliderInt2(const char* label, int value[2], int minimum, int maximum,
-        const char* format = "%d", ImGuiSliderFlags flags = 0);
     bool OneStepCombo(const char* label, int* current_item, const char* const items[], int item_count,
         int popup_max_height_in_items = -1);
     bool OneStepColorEdit4(const char* label, float color[4], ImGuiColorEditFlags flags = 0);
     void OneStepSeparatorText(const char* label);
-    void OneStepStaticDescription(const char* format, ...);
 }

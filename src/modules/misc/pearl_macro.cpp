@@ -12,7 +12,6 @@
 #include "pearl_macro.hpp"
 #include "../../services/game/world_bridge.hpp"
 #include "../../ui/settings_renderer.hpp"
-#include "../ui_redirect.hpp"
 #include "../../gui/gui.hpp"
 #include "../../mappings.hpp"
 
@@ -216,6 +215,4 @@ void modules::pearl_macro::on_render_shutdown()
 void modules::pearl_macro::render_options()
 {
 	gui::settings::render(settings_, module_settings::pearl_macro::schema());
-	ImGui::TextDisabled("%s", "One use: switch to pearl, throw, then restore the old slot.");
-	ImGui::TextDisabled("%s", "Requires an ender pearl in the hotbar.");
 }

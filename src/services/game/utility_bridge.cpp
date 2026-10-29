@@ -53,14 +53,14 @@ namespace
             stop_method = checked(env, env->GetMethodID(utility, "stop", "()V"));
             auto instance = checked(env, env->NewObject(utility, create, parent, static_cast<jint>(mc::target.build_id)));
             bridge = checked(env, env->NewGlobalRef(instance));
-            OutputDebugStringW(L"[OneStep] Java utility bridge connected (1.21.11).\n");
+            OutputDebugStringW(L"[OneStep] Java utility bridge connected.\n");
             return true;
         }
         catch (...)
         {
             platform::jni_context::clear_exception();
             connection_failed = true;
-            OutputDebugStringW(L"[OneStep] Utility Java setup failed; legacy backend retained.\n");
+            OutputDebugStringW(L"[OneStep] Utility Java setup failed.\n");
             return false;
         }
     }
@@ -69,10 +69,12 @@ namespace
 services::game::hybrid::result services::game::utility::update(feature operation, bool active, int value, bool physical_use_held)
 {
     using hybrid::result;
-    if constexpr (mc::target.build_id != 12111) return result::native_fallback;
+    if constexpr (mc::target.build_id != 12111)
+        if (operation == feature::full_bright) return result::native_fallback;
     const auto index = static_cast<std::size_t>(operation);
     if (index < 1 || index > 3) return result::unavailable;
-    if (rejected[index] || connection_failed) return result::native_fallback;
+    if (rejected[index] || connection_failed)
+        return operation == feature::full_bright ? result::native_fallback : result::unavailable;
     if (!platform::jni_context::bind_current_thread()) return result::unavailable;
     const HWND window = gui::get_window();
     active = active && !gui::should_unload && !gui::loader_visible;
@@ -82,7 +84,7 @@ services::game::hybrid::result services::game::utility::update(feature operation
     if (!active && !bridge) return result::unavailable;
     jni::frame frame{48};
     auto env = jni::get_env();
-    if (!connect(env)) return result::native_fallback;
+    if (!connect(env)) return operation == feature::full_bright ? result::native_fallback : result::unavailable;
     if (quarantined[index])
     {
         // A mutator may already have run before throwing. Clean up first; never
@@ -101,8 +103,8 @@ services::game::hybrid::result services::game::utility::update(feature operation
         if (platform::jni_context::clear_exception())
         {
             rejected[index] = true;
-            OutputDebugStringW(L"[OneStep] Utility capability unavailable; only that module uses the legacy backend.\n");
-            return result::native_fallback;
+            OutputDebugStringW(L"[OneStep] Utility capability unavailable.\n");
+            return operation == feature::full_bright ? result::native_fallback : result::unavailable;
         }
         prepared[index] = true;
     }

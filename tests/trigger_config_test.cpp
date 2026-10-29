@@ -4,6 +4,7 @@
 #undef main
 #include "../src/modules/combat/trigger_config.hpp"
 #include <cassert>
+#include <limits>
 
 class trigger_fixture final : public modules::module
 {
@@ -19,6 +20,19 @@ public:
 int main()
 {
     using namespace trigger_engine;
+    config invalid;
+    invalid.cooldown[0] = std::numeric_limits<float>::quiet_NaN();
+    assert(!normalize(invalid));
+    invalid = {}; invalid.weapon = static_cast<weapon_mode>(9);
+    assert(!normalize(invalid));
+    invalid = {}; invalid.cooldown[0] = 2.f; invalid.cooldown[1] = .1f;
+    invalid.reaction[0] = 200; invalid.reaction[1] = -10;
+    assert(normalize(invalid) && invalid.cooldown[0] == .5f && invalid.cooldown[1] == 1.f &&
+        invalid.reaction[0] == 0 && invalid.reaction[1] == 150);
+    config copy = invalid;
+    assert(same_config(invalid, copy));
+    copy.click_simulation = !copy.click_simulation;
+    assert(!same_config(invalid, copy));
     trigger_fixture fixture;
     const auto initial = fixture.export_config_settings();
     assert(initial.find("prioritize_crits") == std::string::npos && initial.find("min_cooldown") == std::string::npos);

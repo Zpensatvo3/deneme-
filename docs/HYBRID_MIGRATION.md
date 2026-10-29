@@ -12,8 +12,10 @@ Katalog 36 modüldür. Beş oyun I/O köprüsü yalnızca halen kayıtlı özell
 | InventoryBridge | Pot Refill, Mouse Tweaks |
 | WorldBridge | Pearl Macro, Triggerbot, Jump Reset, Auto Totem |
 
-İlk dört köprünün hibrit I/O yolu 1.21.11'e özeldir; diğer hedeflerin mevcut
-native yolları korunur. WorldBridge denetleyicileri desteklenen tam sürümler için
+Sprint ve Fast Place, UtilityBridge ile; No Jump Delay GameBridge ile, Fast EXP
+ise ItemBridge ile dört hedefte Java kullanır. İlk dört köprünün diğer
+hibrit I/O yolları 1.21.11'e özeldir; diğer hedeflerin mevcut native yolları
+korunur. WorldBridge denetleyicileri desteklenen tam sürümler için
 açık eşlemeler kullanır: 1.21.11, 26.1, 26.1.1 ve 26.1.2. Bu tablo oyun içi
 doğrulama iddiası değildir.
 

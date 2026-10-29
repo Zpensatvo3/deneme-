@@ -10,8 +10,7 @@ parser.add_argument("--parser-dir", type=Path)
 options = parser.parse_args()
 sources = ["src/modules/combat/jump_reset_config.hpp", "src/modules/combat/jump_reset.hpp",
            "src/modules/combat/jump_reset.cpp", "tests/jump_reset_config_test.cpp",
-           "src/modules/combat/jump_reset_engine.hpp", "tests/jump_reset_engine_test.cpp",
-           "src/services/input/jump_key_tracking.hpp", "src/services/input/input_service.hpp",
+           "src/services/input/input_service.hpp",
            "src/services/input/input_service.cpp", "src/gui/gui.cpp", "src/main.cpp",
            "src/services/game/world_bridge.hpp"]
 texts = {source: (ROOT / source).read_text(encoding="utf-8") for source in sources}
@@ -37,6 +36,7 @@ assert "render_when_disabled()" in header and "reset_generation" in header
 bridge = (ROOT / "src/bridge/WorldBridge.java").read_text(encoding="utf-8")
 native = (ROOT / "src/services/game/world_bridge.cpp").read_text(encoding="utf-8")
 assert "jump_reset_engine" not in header + implementation
+assert not (ROOT / "src/modules/combat/jump_reset_engine.hpp").exists()
 assert "capture_client_context" not in implementation and "setPressed" not in implementation
 assert "world_bridge::tick_jump(settings, enabled, reset_generation)" in implementation
 assert "std::lock_guard lock(settings_mutex)" in implementation

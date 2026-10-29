@@ -102,7 +102,8 @@ Proven-unused historical declarations are excluded **only from the shared 26.1 b
 and remain available for the existing four targets: the removed SwordItem alias
 (active sword checks use tags), legacy baked-model/color/renderer aliases (the
 26.1 icon reader uses render states), the uncalled old pick/click packet wrappers,
-the unused account-type helper and unused ClientLevelData time/weather helpers.
+the unused account-type helper. The uncalled ClientLevelData time/weather helpers
+were subsequently removed from all targets during dead-code cleanup.
 No active module was disabled or skipped. The valid ClientLevelData game-time
 getter and its class/field remain. No production data or resources were accessed.
 

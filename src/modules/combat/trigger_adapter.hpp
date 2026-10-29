@@ -1,6 +1,7 @@
 #pragma once
 #include "trigger_engine.hpp"
 #include <atomic>
+#include <cstdint>
 #include <mutex>
 namespace trigger_engine
 {

@@ -724,11 +724,6 @@ void modules::spotify::source::set_lyrics_enabled(bool enable_lyrics)
 	wake_signal.notify_all();
 }
 
-void modules::spotify::source::request_refresh()
-{
-	refresh_requested.store(true, std::memory_order_release);
-	wake_signal.notify_all();
-}
 
 modules::spotify::now_playing modules::spotify::source::snapshot() const
 {

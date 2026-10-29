@@ -45,7 +45,6 @@ namespace
         ~runtime_services()
         {
             gui::should_unload.store(true, std::memory_order_release);
-            services::input::cancel_automatic_inputs();
             if (configs_started) configs::shutdown();
             loader_ui::closing();
             gui::draw = false;

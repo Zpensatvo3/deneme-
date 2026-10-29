@@ -257,12 +257,3 @@ void gui::ui_state::flush_preferences(bool force, bool interacting)
         std::filesystem::remove(temporary, error);
     }
 }
-
-void gui::ui_state::reset_preferences()
-{
-    state = {};
-    gui::active_theme = 0;
-    loaded = true;
-    mark_preferences_dirty();
-    flush_preferences(true);
-}

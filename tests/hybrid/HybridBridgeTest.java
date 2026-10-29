@@ -75,6 +75,9 @@ public final class HybridBridgeTest {
         check(bridge.capture(1) == null && !bridge.clearJump(jump), "shutdown rejects retained work");
         GameBridge fresh = bridge();
         check(fresh.clearJump(fresh.capture(1)), "new bridge after shutdown");
+        p.field_6228 = 3; check(fresh.tick() && p.field_6228 == 0, "tick clears positive delay");
+        p.field_6228 = -1; check(!fresh.tick() && p.field_6228 == -1, "negative delay untouched");
+        p.field_6228 = 0; check(!fresh.tick(), "zero delay untouched");
         expectBindingFailure(HybridBridgeTest.class.getClassLoader(), 12101);
         expectBindingFailure(new ClassLoader(HybridBridgeTest.class.getClassLoader()) {
             @Override protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {

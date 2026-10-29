@@ -4,23 +4,29 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-/** Original OneStep item I/O. Decisions/timers stay native; packets are frame-local and single-use. */
+/** Client-thread Fast EXP controller; decisions, timing and game I/O stay in Java. */
 public final class ItemBridge {
     public static final int FAST_EXP = 2;
     private final ClassLoader loader;
+    private final boolean named;
     private final Class<?> clientType, playerType;
     private final Field instance, player, world, screen;
     private final Method onThread, alive;
     private final boolean[] prepared = new boolean[5];
     private Field expItem, useCooldown;
     private Method empty;
-    private Method syncSlot, mainHand, offHand, getItem, useItem;
+    private Method mainHand, offHand, getItem, useItem;
     private long sequence, expSequence;
+    private long nextUseNanos;
+    private Object sessionPlayer, sessionWorld;
+    private boolean armed, blocked;
     private volatile boolean stopped;
 
     public ItemBridge(ClassLoader loader, int target) throws ReflectiveOperationException {
-        if (loader == null || target != 12111) throw new IllegalArgumentException("ItemBridge requires Fabric 1.21.11");
+        if (loader == null || (target != 12111 && target != 26100 && target != 26101 && target != 26102))
+            throw new IllegalArgumentException("ItemBridge requires an exact supported target");
         this.loader = loader;
+        named = target >= 26100;
         clientType = load("class_310"); playerType = load("class_746");
         instance = field(clientType, "field_1700", clientType, true);
         player = field(clientType, "field_1724", playerType, false);
@@ -30,10 +36,40 @@ public final class ItemBridge {
         alive = method(playerType, "method_5805", boolean.class);
     }
     private Class<?> load(String name) throws ClassNotFoundException {
-        return Class.forName("net.minecraft." + name, false, loader);
+        String mapped = named ? switch (name) {
+            case "class_310" -> "net.minecraft.client.Minecraft";
+            case "class_746" -> "net.minecraft.client.player.LocalPlayer";
+            case "class_638" -> "net.minecraft.client.multiplayer.ClientLevel";
+            case "class_437" -> "net.minecraft.client.gui.screens.Screen";
+            case "class_1799" -> "net.minecraft.world.item.ItemStack";
+            case "class_1792" -> "net.minecraft.world.item.Item";
+            case "class_1802" -> "net.minecraft.world.item.Items";
+            default -> throw new IllegalArgumentException("Unsupported item class: " + name);
+        } : "net.minecraft." + name;
+        return Class.forName(mapped, false, loader);
     }
-    private static Field field(Class<?> owner, String name, Class<?> type, boolean isStatic)
+    private String mapped(String name) {
+        if (!named) return name;
+        return switch (name) {
+            case "field_1700" -> "instance";
+            case "field_1724" -> "player";
+            case "field_1687" -> "level";
+            case "field_1755" -> "screen";
+            case "field_8287" -> "EXPERIENCE_BOTTLE";
+            case "field_1752" -> "rightClickDelay";
+            case "method_18854" -> "isSameThread";
+            case "method_5805" -> "isAlive";
+            case "method_7960" -> "isEmpty";
+            case "method_6047" -> "getMainHandItem";
+            case "method_6079" -> "getOffhandItem";
+            case "method_7909" -> "getItem";
+            case "method_1583" -> "startUseItem";
+            default -> throw new IllegalArgumentException("Unsupported item binding: " + name);
+        };
+    }
+    private Field field(Class<?> owner, String name, Class<?> type, boolean isStatic)
             throws ReflectiveOperationException {
+        name = mapped(name);
         for (Class<?> c = owner; c != null; c = c.getSuperclass()) {
             try {
                 Field f = c.getDeclaredField(name);
@@ -44,8 +80,9 @@ public final class ItemBridge {
         }
         throw new NoSuchFieldException(name);
     }
-    private static Method method(Class<?> owner, String name, Class<?> result, Class<?>... arguments)
+    private Method method(Class<?> owner, String name, Class<?> result, Class<?>... arguments)
             throws ReflectiveOperationException {
+        name = mapped(name);
         for (Class<?> c = owner; c != null; c = c.getSuperclass()) {
             try {
                 Method m = c.getDeclaredMethod(name, arguments);
@@ -125,7 +162,40 @@ public final class ItemBridge {
         useItem.invoke(client); // Exactly one request; no second SendInput click.
         return true;
     }
+    private void resetSession() {
+        armed = false; nextUseNanos = 0; sessionPlayer = sessionWorld = null; expSequence = 0;
+    }
+    public void update(boolean enabled, boolean permitted, boolean held, int minCps, int maxCps)
+            throws ReflectiveOperationException {
+        if (clientOnThread() == null) return;
+        if (!enabled || !held) { blocked = false; resetSession(); return; }
+        if (!permitted) { resetSession(); return; }
+        if (blocked) return;
+        Object[] observed = captureExp();
+        if (observed == null) { resetSession(); return; }
+        if (sessionPlayer != observed[1] || sessionWorld != observed[2]) {
+            resetSession(); sessionPlayer = observed[1]; sessionWorld = observed[2];
+            observed = captureExp();
+            if (observed == null) { resetSession(); return; }
+        }
+        double[] flags = (double[]) observed[5];
+        if (flags[2] != 1 && flags[3] != 1) { blocked = true; resetSession(); return; }
+        long now = System.nanoTime();
+        if (armed && now - nextUseNanos < 0) return;
+        try {
+            if (!useExp(observed, true)) { blocked = true; resetSession(); return; }
+        } catch (ReflectiveOperationException | RuntimeException failure) {
+            blocked = true; resetSession(); throw failure;
+        }
+        int low = Math.max(1, Math.min(50, Math.min(minCps, maxCps)));
+        int high = Math.max(low, Math.min(50, Math.max(minCps, maxCps)));
+        java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        int cps = random.nextInt(low, high + 1);
+        long intervalMs = Math.max(10, Math.round(1000.0 / cps + random.nextDouble(-1.5, 1.5)));
+        nextUseNanos = now + intervalMs * 1_000_000L;
+        armed = true;
+    }
     public void stop() {
-        stopped = true; expSequence = 0;
+        stopped = true; blocked = false; resetSession();
     }
 }

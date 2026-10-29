@@ -58,8 +58,7 @@ ve aynı dosya içinde açıklanır.
 Spotify HUD logosu, kullanıcının sağladığı
 `spotify-2015-vector-logo-seeklogo.zip` paketindeki `spotify-2015-seeklogo.png`
 dosyasından alınmıştır. `assets/icons/spotify-2015-seeklogo.png` orijinal dosyanın
-birebir kopyasıdır; yeniden çizilmedi veya renklendirilmedi. Önceki kullanıcı
-asset'i `assets/icons/spotify.svg` ve mekanik mesh derleyicisi arşiv amaçlı korunur.
+birebir kopyasıdır; yeniden çizilmedi veya renklendirilmedi.
 Spotify markası ve logosu ilgili hak sahibine aittir;
 kullanıcı dosyası için ayrıca bir açık kaynak lisansı varsayılmamıştır.
 

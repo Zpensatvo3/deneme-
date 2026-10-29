@@ -100,8 +100,6 @@ namespace maps
 
 		BEGIN_KLASS_DEF_EX(ClientPlayerEntity, ONESTEP_MC_NAME("net/minecraft/class_746"), AbstractClientPlayerEntity)
 		jni::field<Input, ONESTEP_MC_NAME("field_3913")> input{ *this };
-		/* ClientPlayerEntity.canStartSprinting. */
-		jni::method<jboolean, ONESTEP_MC_NAME("method_48300"), jni::NOT_STATIC> canStartSprinting{ *this };
         jni::method<HitResult, ONESTEP_MC_NAME("method_76763"), jni::STATIC, Entity, jdouble, jdouble, jfloat> findCrosshairTarget{*this};
 		maps::PlayerEntity toPlayerEntity() const
     {

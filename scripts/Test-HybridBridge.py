@@ -44,6 +44,18 @@ def main():
         for mode, cp in modes:
             for test in ("HybridBridgeTest", "UtilityBridgeTest", "ItemBridgeTest", "ContainerBridgeTest", "WorldBridgeTest"):
                 subprocess.run([java, "-Xcheck:jni", "-cp", cp, "net.minecraft." + test, mode], cwd=ROOT, check=True)
+        named_classes = Path(work) / "utility-named"
+        named_sources = sorted((ROOT / "tests/utility_named").rglob("*.java"))
+        subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(named_classes),
+                        str(ROOT / "src/bridge/UtilityBridge.java"), str(ROOT / "src/bridge/GameBridge.java"),
+                        str(ROOT / "src/bridge/ItemBridge.java"),
+                        *map(str, named_sources)], check=True)
+        named_modes = [("source", str(named_classes))]
+        if not args.source_only:
+            named_modes.append(("embedded", os.pathsep.join(map(str, (embedded, named_classes)))))
+        for mode, cp in named_modes:
+            for test in ("NamedSprintTest", "NamedFastPlaceTest", "NamedNoJumpDelayTest", "NamedFastExpTest"):
+                subprocess.run([java, "-Xcheck:jni", "-cp", cp, test, mode], cwd=ROOT, check=True)
         # Independent fixtures share intermediary names with the earlier suites.
         for folder, test in (("jump_reset", "JumpResetBridgeTest"),):
             isolated = Path(work) / folder
@@ -57,6 +69,8 @@ def main():
                 isolated_modes.append(("embedded", os.pathsep.join(map(str, (embedded, isolated)))))
             for mode, cp in isolated_modes:
                 subprocess.run([java, "-Xcheck:jni", "-cp", cp, "net.minecraft." + test, mode], cwd=ROOT, check=True)
+    subprocess.run([shutil.which("python") or "python", str(ROOT / "scripts/Test-TriggerbotBridge.py"),
+                    *(["--source-only"] if args.source_only else [])], cwd=ROOT, check=True)
 
 
 

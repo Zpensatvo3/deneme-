@@ -179,10 +179,6 @@ bool modules::shield_breaker::gate_left_click()
 	}
 }
 
-bool modules::shield_breaker::prepare_for_synthetic_attack()
-{
-	return gate_left_click();
-}
 
 bool modules::shield_breaker::prepare_for_trigger_attack()
 {

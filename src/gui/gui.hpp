@@ -21,8 +21,7 @@ namespace gui
 	inline std::atomic_bool should_unload{false};
 	inline bool loader_visible = true;
 	// Fixed shortcut: Click GUI is always opened with Right Shift.
-	inline int menu_key = VK_RSHIFT;
-	inline bool menu_key_scanning = false;
+	inline constexpr int menu_key = VK_RSHIFT;
 	inline bool suppress_menu_key_until_release = false;
 	inline std::atomic_bool suppress_escape_until_release{false};
 	inline int active_theme = 0; // 0: onestep, 1: Crimson, 2: Emerald, 3: Ocean, 4: Rose, 5: Cyber, 6: Sunset, 7: Mono
@@ -31,7 +30,6 @@ namespace gui
 	inline module_settings::arraylist arraylist_settings{};
 	inline float& hud_scale = watermark_settings.scale;
 	inline float& arraylist_scale = arraylist_settings.scale;
-	inline int hud_style = 0; // 0: Glass, 1: Minimal, 2: Compact
 	inline float& hud_pos_x = watermark_settings.position_x;
 	inline float& hud_pos_y = watermark_settings.position_y;
 	inline float& arraylist_pos_x = arraylist_settings.position_x;
@@ -53,7 +51,6 @@ namespace gui
 
 	ImColor get_dynamic_color(int offset = 0);
 	ImTextureID get_icon_texture(icon_asset asset);
-	void render_click_gui_options();
 	void render_theme_selection();
 	void request_panic();
 }

@@ -472,69 +472,6 @@ namespace platform::adapter
             return data;
         }
 
-        bool can_start_sprinting(const maps::ClientPlayerEntity& player, const maps::GameOptions& options) const override
-        {
-            if (!player) return false;
-            try
-            {
-                if (player.canStartSprinting.is_valid())
-                {
-                    jboolean res = player.canStartSprinting.call();
-                    if (!platform::jni_context::clear_exception())
-                        return res == JNI_TRUE;
-                }
-            }
-            catch (...) { platform::jni_context::clear_exception(); }
-
-            // Fallback: Check forward key
-            try
-            {
-                if (options && options.forwardKey.is_valid())
-                {
-                    maps::KeyBinding fwd = options.forwardKey.get();
-                    if (fwd && fwd.isPressed.is_valid())
-                    {
-                        jboolean res = fwd.isPressed.call();
-                        if (!platform::jni_context::clear_exception())
-                            return res == JNI_TRUE;
-                    }
-                }
-            }
-            catch (...) { platform::jni_context::clear_exception(); }
-
-            return false;
-        }
-
-        bool is_totem(const maps::ItemStack& stack, const maps::Item& totem_item) const override
-        {
-            if (!stack) return false;
-            try
-            {
-                if (stack.isEmpty.is_valid() && stack.isEmpty.call() == JNI_TRUE)
-                    return false;
-                platform::jni_context::clear_exception();
-
-                maps::Item item = stack.item.get();
-                if (!item || platform::jni_context::clear_exception())
-                    return false;
-
-                if (totem_item && item.is_same_object(totem_item))
-                    return true;
-
-                if (item.getTranslationKey.is_valid())
-                {
-                    maps::String key = item.getTranslationKey.call();
-                    if (key && !platform::jni_context::clear_exception())
-                    {
-                        std::string s = key.to_string();
-                        if (s.find("totem") != std::string::npos)
-                            return true;
-                    }
-                }
-            }
-            catch (...) { platform::jni_context::clear_exception(); }
-            return false;
-        }
     };
 
     // Each binary uses one mapping profile, selected at compile time.

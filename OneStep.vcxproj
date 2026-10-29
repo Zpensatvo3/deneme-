@@ -26,11 +26,6 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="build-config\MinecraftTarget.props" />
-  <Target Name="BuildSpotifyVector" BeforeTargets="ClCompile"
-          Inputs="$(ProjectDir)assets\icons\spotify.svg;$(ProjectDir)scripts\Build-SpotifyVector.py"
-          Outputs="$(ProjectDir)src\ui\spotify_vector_data.hpp">
-    <Exec Command="python &quot;$(ProjectDir)scripts\Build-SpotifyVector.py&quot;" />
-  </Target>
   <Target Name="BuildGameBridge" BeforeTargets="ResourceCompile"
           Inputs="$(ProjectDir)src\bridge\GameBridge.java;$(ProjectDir)src\bridge\UtilityBridge.java;$(ProjectDir)src\bridge\ItemBridge.java;$(ProjectDir)src\bridge\InventoryBridge.java;$(ProjectDir)src\bridge\WorldBridge.java;$(ProjectDir)src\bridge\ClientTickRelay.java"
           Outputs="$(ProjectDir)assets\hybrid\net\onestep\hybrid\GameBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\UtilityBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\ItemBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\InventoryBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\WorldBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\ClientTickRelay.class">
@@ -245,7 +240,6 @@
     <ClCompile Include="src\platform\jni\jvm_session.cpp" />
     <ClCompile Include="src\maths\maths.cpp" />
     <ClCompile Include="src\platform\jni\jni_context.cpp" />
-    <ClCompile Include="src\platform\jni\client_dispatcher.cpp" />
     <ClCompile Include="src\services\game\hotbar_service.cpp" />
     <ClCompile Include="src\services\game\client_context.cpp" />
     <ClCompile Include="src\services\game\menu_input.cpp" />
@@ -636,7 +630,6 @@
     <ClInclude Include="src\gui\ui_typography.hpp" />
     <ClInclude Include="src\gui\popup_controls.hpp" />
     <ClInclude Include="src\services\game\attack_coordinator.hpp" />
-    <ClInclude Include="src\services\input\click_tracking.hpp" />
     <ClInclude Include="src\jvmti\jvmti.hpp" />
     <ClInclude Include="src\mappings.hpp" />
     <ClInclude Include="src\maths\maths.hpp" />
@@ -657,9 +650,6 @@
     <ClInclude Include="src\ui\block_picker.hpp" />
     <ClInclude Include="src\ui\item_icon.hpp" />
     <None Include="assets\icons\spotify-2015-seeklogo.png" />
-    <ClInclude Include="src\ui\spotify_vector.hpp" />
-    <ClInclude Include="src\ui\spotify_vector_data.hpp" />
-    <None Include="assets\icons\spotify.svg" />
     <ClInclude Include="src\sdk\minecraft\common\*.hpp" />
     <None Include="src\sdk\minecraft\common\manifest.json" />
     <ClInclude Include="src\platform\jni\jvm_session.hpp" />

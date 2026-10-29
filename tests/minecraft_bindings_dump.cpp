@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     B(maps::MinecraftClient, renderTickCounter); B(maps::MinecraftClient, doAttack); B(maps::MinecraftClient, doItemUse);
     B(maps::Entity, getWorld); B(maps::Entity, getPos); B(maps::Entity, fallDistance);
     B(maps::Entity, getBoundingBox); B(maps::Entity, getLerpedPos); B(maps::Entity, getEyeY);
-    B(maps::LivingEntity, jumpingCooldown); B(maps::LivingEntity, hasStatusEffectEntry);
+    B(maps::LivingEntity, hasStatusEffectEntry);
     B(maps::PlayerEntity, getInventory); B(maps::PlayerEntity, getAttackCooldownProgress);
     B(maps::PlayerEntity, getBlockInteractionRange); B(maps::PlayerEntity, getEntityInteractionRange);
     B(maps::PlayerInventory, main); B(maps::PlayerInventory, selectedSlot);

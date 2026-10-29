@@ -43,5 +43,4 @@ namespace gui::ui_state
     void load_preferences();
     void mark_preferences_dirty();
     void flush_preferences(bool force = false, bool interacting = false);
-    void reset_preferences();
 }

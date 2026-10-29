@@ -23,13 +23,10 @@
 #include "../modules/combat/auto_totem.hpp"
 #include "../modules/combat/jump_reset.hpp"
 #include "../modules/combat/triggerbot.hpp"
-#include "../modules/misc/fast_exp.hpp"
 #include "../friends/friends.hpp"
 #include "../loader/loader_ui.hpp"
-#include "../platform/jni/client_dispatcher.hpp"
 #include "../platform/input/key_codes.hpp"
 #include "../services/input/input_service.hpp"
-#include "../services/game/attack_service.hpp"
 #include "../services/game/menu_input.hpp"
 #include "../services/game/menu_input_policy.hpp"
 #include "../../resource.h"
@@ -302,9 +299,7 @@ namespace
 		const bool opening = open && !panel_was_open;
 		if (open != panel_was_open)
 		{
-			services::input::cancel_trigger_click();
 			services::input::reset_physical_buttons();
-			modules::fast_exp::notify_manual_right_click(false);
 			panel_was_open = open;
 		}
 		services::game::menu_input::update(open, focused, !gui::should_unload);
@@ -353,13 +348,6 @@ namespace
 
 
 } // Closing anonymous namespace
-
-void gui::render_click_gui_options()
-{
-	// This is deliberately fixed and has no keybind-capture control in the UI.
-	gui::menu_key = VK_RSHIFT;
-
-}
 
 void gui::render_theme_selection()
 {
@@ -424,10 +412,6 @@ static LRESULT CALLBACK detour_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 				modules::shield_breaker::gate_left_click();
 			}
 		}
-		else
-		{
-			modules::fast_exp::notify_manual_right_click(pressed);
-		}
 	};
 
 	// GLFW commonly receives hardware mouse buttons through raw input. Reading
@@ -443,7 +427,6 @@ static LRESULT CALLBACK detour_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
             totem->cancel_on_client_thread();
 		if (auto* jump = dynamic_cast<modules::jump_reset*>(modules::find_module_by_id("jump_reset")))
 			jump->cancel_on_client_thread();
-		services::input::cancel_trigger_click();
 		if (gui::draw) release_panel_mouse(hWnd);
 	}
 	if (msg == WM_SETFOCUS)
@@ -463,20 +446,7 @@ static LRESULT CALLBACK detour_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 		{
 			const USHORT flags = raw.data.mouse.usButtonFlags;
 			const auto tag = static_cast<std::uintptr_t>(raw.data.mouse.ulExtraInformation);
-			if (services::input::restore_tag(tag))
-			{
-				if (services::input::accept_restore_event(tag))
-					services::attack::restore_left_hold(!gui::draw && services::input::physical_button_down(services::input::mouse_button::left));
-				return DefWindowProcA(hWnd, msg, wParam, lParam);
-			}
-			if (services::input::tracked_tag(tag))
-			{
-				bool allow = true;
-				if (flags & RI_MOUSE_LEFT_BUTTON_DOWN) allow &= services::input::observe_tracked_event(tag, true, services::input::event_path::raw);
-				if (flags & RI_MOUSE_LEFT_BUTTON_UP) allow &= services::input::observe_tracked_event(tag, false, services::input::event_path::raw);
-				if (!allow) return DefWindowProcA(hWnd, msg, wParam, lParam);
-			}
-			else if (!gui::draw && !services::input::is_synthetic_tag(tag))
+			if (!gui::draw && !services::input::is_synthetic_tag(tag))
 			{
 				if (flags & RI_MOUSE_LEFT_BUTTON_DOWN) update_physical_button(true, true);
 				if (flags & RI_MOUSE_LEFT_BUTTON_UP) update_physical_button(true, false);
@@ -491,13 +461,8 @@ static LRESULT CALLBACK detour_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 	if (gui::draw && (key_down || key_up) && services::game::menu_input::system_shortcut(
 		static_cast<unsigned>(wParam), msg == WM_SYSKEYDOWN || msg == WM_SYSKEYUP || (lParam & (1LL << 29))))
 		return CallWindowProcA(original_WndProc, hWnd, msg, wParam, lParam);
-	if ((key_down || key_up) && services::input::jump_key_tag(mouse_tag))
-	{
-		if (wParam != VK_SPACE || !services::input::observe_jump_space_event(mouse_tag, key_down)) return 0;
-	}
-	else if ((key_down || key_up) && !services::input::is_synthetic_tag(mouse_tag))
+	if ((key_down || key_up) && !services::input::is_synthetic_tag(mouse_tag))
 		services::input::observe_physical_key(static_cast<unsigned>(wParam), static_cast<unsigned>((lParam >> 16) & 0x1ff), key_down);
-	if ((msg == WM_CHAR || msg == WM_SYSCHAR) && services::input::jump_key_tag(mouse_tag)) return 0;
 	if (!services::input::is_synthetic_tag(mouse_tag))
 	{
 		if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP)
@@ -506,14 +471,6 @@ static LRESULT CALLBACK detour_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 			services::input::observe_physical_key(GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? VK_XBUTTON1 : VK_XBUTTON2,
 				0, msg == WM_XBUTTONDOWN && !gui::draw);
 	}
-	if ((msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP) && services::input::restore_tag(mouse_tag))
-	{
-		if (services::input::accept_restore_event(mouse_tag))
-			services::attack::restore_left_hold(!gui::draw && services::input::physical_button_down(services::input::mouse_button::left));
-		return 0; // State restoration must not enqueue another Minecraft attack.
-	}
-	if ((msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP) && services::input::tracked_tag(mouse_tag) &&
-		!services::input::observe_tracked_event(mouse_tag, msg == WM_LBUTTONDOWN, services::input::event_path::window)) return 0;
 
 	if ((msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) && !services::input::is_synthetic_tag(mouse_tag))
 		last_pressed_key = platform::keys::from_message(static_cast<int>(wParam), static_cast<unsigned>((lParam >> 16) & 0x1ff));
@@ -851,7 +808,7 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 			if (!current_menu_key)
 				gui::suppress_menu_key_until_release = false;
 		}
-		else if (shortcut_pressed && !gui::menu_key_scanning &&
+		else if (shortcut_pressed &&
 			!std::any_of(modules::get_modules().begin(), modules::get_modules().end(),
 				[](const modules::module* entry) { return entry->is_keybind_capture_active(); }) &&
 			!gui::should_unload && !gui::loader_visible)
@@ -883,8 +840,6 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 		ImGui::GetIO().AddMouseButtonEvent(ImGuiMouseButton_Right, accept_buttons && right_down);
 	}
 	ImGui::NewFrame();
-	platform::client_dispatcher::drain();
-	else platform::client_dispatcher::clear();
 
 
 	// Update dynamic accent colors in style

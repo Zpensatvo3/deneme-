@@ -12,16 +12,18 @@ public final class GameBridge {
     private volatile boolean stopped;
 
     public GameBridge(ClassLoader loader, int target) throws ReflectiveOperationException {
-        if (target != 12111 || loader == null) throw new IllegalArgumentException("Exact Fabric 1.21.11 required");
-        Class<?> client = Class.forName("net.minecraft.class_310", false, loader);
-        Class<?> p = Class.forName("net.minecraft.class_746", false, loader);
-        instance = field(client, "field_1700", client, true);
-        player = field(client, "field_1724", p, false);
-        world = field(client, "field_1687", Class.forName("net.minecraft.class_638", false, loader), false);
-        screen = field(client, "field_1755", Class.forName("net.minecraft.class_437", false, loader), false);
-        jumpCooldown = field(p, "field_6228", int.class, false);
-        onThread = method(client, "method_18854");
-        alive = method(p, "method_5805");
+        if (loader == null || (target != 12111 && target != 26100 && target != 26101 && target != 26102))
+            throw new IllegalArgumentException("Exact supported target required");
+        boolean named = target >= 26100;
+        Class<?> client = Class.forName(named ? "net.minecraft.client.Minecraft" : "net.minecraft.class_310", false, loader);
+        Class<?> p = Class.forName(named ? "net.minecraft.client.player.LocalPlayer" : "net.minecraft.class_746", false, loader);
+        instance = field(client, named ? "instance" : "field_1700", client, true);
+        player = field(client, named ? "player" : "field_1724", p, false);
+        world = field(client, named ? "level" : "field_1687", Class.forName(named ? "net.minecraft.client.multiplayer.ClientLevel" : "net.minecraft.class_638", false, loader), false);
+        screen = field(client, named ? "screen" : "field_1755", Class.forName(named ? "net.minecraft.client.gui.screens.Screen" : "net.minecraft.class_437", false, loader), false);
+        jumpCooldown = field(p, named ? "noJumpDelay" : "field_6228", int.class, false);
+        onThread = method(client, named ? "isSameThread" : "method_18854");
+        alive = method(p, named ? "isAlive" : "method_5805");
     }
     private static Field field(Class<?> owner, String name, Class<?> type, boolean stat) throws ReflectiveOperationException {
         for (Class<?> c = owner; c != null; c = c.getSuperclass()) try {
@@ -63,6 +65,10 @@ public final class GameBridge {
             !(boolean) alive.invoke(packet[1]) || jumpCooldown.getInt(packet[1]) != data[3]) return false;
         jumpCooldown.setInt(packet[1], 0);
         return true;
+    }
+    public boolean tick() throws ReflectiveOperationException {
+        Object[] packet = capture(1);
+        return packet != null && clearJump(packet);
     }
     public void stop() { stopped = true; pending = 0; }
 }

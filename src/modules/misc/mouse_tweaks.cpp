@@ -11,7 +11,6 @@
 #include "mouse_tweaks.hpp"
 #include "../../services/game/inventory_bridge.hpp"
 #include "../../ui/settings_renderer.hpp"
-#include "../ui_redirect.hpp"
 #include "../../gui/gui.hpp"
 
 namespace
@@ -438,6 +437,4 @@ void modules::mouse_tweaks::on_disable(::cache& cache)
 void modules::mouse_tweaks::render_options()
 {
 	gui::settings::render(settings_, module_settings::mouse_tweaks::schema());
-	ImGui::TextDisabled("%s", "RMB revisits a slot; LMB collects matching stacks.");
-	ImGui::TextDisabled("%s", "Hold Shift while dragging to quick-move hovered stacks.");
 }

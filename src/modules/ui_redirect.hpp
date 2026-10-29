@@ -9,11 +9,7 @@
 #define Checkbox OneStepCheckbox
 #define SliderFloat OneStepSliderFloat
 #define SliderInt OneStepSliderInt
-#define SliderFloat2 OneStepSliderFloat2
-#define SliderInt2 OneStepSliderInt2
 #define Combo OneStepCombo
 #define ColorEdit4 OneStepColorEdit4
 #define SeparatorText OneStepSeparatorText
-#define TextDisabled OneStepStaticDescription
-#define TextWrapped OneStepStaticDescription
 #endif

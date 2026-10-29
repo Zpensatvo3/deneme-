@@ -7,7 +7,6 @@
 #include "../../gui/watermark_draw.hpp"
 #include "../../cache/cache.hpp"
 #include "../../platform/jni/jni_context.hpp"
-#include "../ui_redirect.hpp"
 #include "../../gui/gui.hpp"
 #include "../../friends/friends.hpp"
 
@@ -106,7 +105,6 @@ void modules::watermark::render_overlay()
 
 void modules::watermark::render_options()
 {
-    ImGui::TextDisabled("%s", "Displays onestep logo watermark");
     ImGui::Spacing();
     gui::settings::render(gui::watermark_settings, module_settings::watermark::schema());
 }

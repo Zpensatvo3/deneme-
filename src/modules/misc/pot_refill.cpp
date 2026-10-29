@@ -8,7 +8,6 @@
 
 #include "pot_refill.hpp"
 #include "../../ui/settings_renderer.hpp"
-#include "../ui_redirect.hpp"
 #include "../../gui/gui.hpp"
 #include "../../mappings.hpp"
 #include "pot_refill_engine.hpp"
@@ -153,7 +152,7 @@ void modules::pot_refill::render_overlay()
 	const auto reset = [&] {
 		state.reset();
         services::game::inventory_bridge::cancel(services::game::inventory_bridge::feature::refill);
-		live_status = live_health_potions = live_empty_hotbar = 0;
+		live_health_potions = live_empty_hotbar = 0;
 	};
 	if (reset_requested.exchange(false, std::memory_order_acq_rel) ||
 		!state.settings || *state.settings != settings_snapshot)
@@ -170,11 +169,9 @@ void modules::pot_refill::render_overlay()
 	}
 	if (gui::draw)
 	{
-		// Keep explicitly labelled last-scan diagnostics visible in the menu,
-		// but discard every pending game action while the menu has focus.
+		// Discard every pending game action while the menu has focus.
 		state.reset();
         services::game::inventory_bridge::cancel(services::game::inventory_bridge::feature::refill);
-		live_status = 9;
 		return;
 	}
 
@@ -197,7 +194,7 @@ void modules::pot_refill::render_overlay()
         }
         if (!observed.cursor_empty || services::input::physical_button_down(services::input::mouse_button::left) ||
             services::input::physical_button_down(services::input::mouse_button::right)) {
-            reset(); live_status = 2; return;
+            reset(); return;
         }
         live_empty_hotbar = live_health_potions = 0;
         std::vector<pot_refill_logic::slot> slots;
@@ -211,22 +208,22 @@ void modules::pot_refill::render_overlay()
             const auto result = state.engine.observe(now, observed.confirmed);
             if (result == pot_refill_logic::observation::completed) {
                 bridge::cancel(bridge::feature::refill);
-                state.engine.arm(now, pot_refill_logic::delay(settings_snapshot, gen)); live_status = 6;
+                state.engine.arm(now, pot_refill_logic::delay(settings_snapshot, gen));
             } else if (result == pot_refill_logic::observation::timed_out) {
-                bridge::cancel(bridge::feature::refill); live_status = 7;
-            } else live_status = 8;
+                bridge::cancel(bridge::feature::refill);
+            }
             return;
         }
-        if (state.engine.blocked()) { live_status = 7; return; }
-        if (!live_empty_hotbar) { live_status = 3; return; }
-        if (!live_health_potions) { live_status = 4; return; }
+        if (state.engine.blocked()) return;
+        if (!live_empty_hotbar) return;
+        if (!live_health_potions) return;
         if (!state.engine.ready(now)) return;
         const auto action = pot_refill_logic::select(slots, settings_snapshot.slot_order, gen);
-        if (!action) { live_status = 1; return; }
+        if (!action) return;
         if (!state.engine.submitted(*action, now)) return;
         if (!bridge::container_act(observed, 0, action->source_screen_id, action->target_screen_id)) {
-            state.engine.stop(); bridge::cancel(bridge::feature::refill); live_status = 5;
-        } else live_status = 8;
+            state.engine.stop(); bridge::cancel(bridge::feature::refill);
+        }
         return;
     }
 
@@ -248,11 +245,10 @@ void modules::pot_refill::render_overlay()
 		!handler.is_same_object(player_handler))
 	{
 		reset();
-		live_status = 1;
 		return;
 	}
 	const int sync_id = handler.syncId.get();
-	if (platform::jni_context::clear_exception()) { reset(); live_status = 1; return; }
+	if (platform::jni_context::clear_exception()) { reset(); return; }
 	const bool same_session = state.session.matches({context.world, player}) &&
 		state.screen.is_same_object(context.screen) && state.handler.is_same_object(handler) && state.sync_id == sync_id;
 	if (!same_session || platform::jni_context::clear_exception())
@@ -273,7 +269,6 @@ void modules::pot_refill::render_overlay()
 		services::input::physical_button_down(services::input::mouse_button::right))
 	{
 		reset();
-		live_status = 2;
 		return;
 	}
 
@@ -281,7 +276,6 @@ void modules::pot_refill::render_overlay()
 	if (!inventory || platform::jni_context::clear_exception())
 	{
 		reset();
-		live_status = 1;
 		return;
 	}
 
@@ -290,7 +284,6 @@ void modules::pot_refill::render_overlay()
 		live_empty_hotbar, live_health_potions))
 	{
 		reset();
-		live_status = 1;
 		return;
 	}
 	const auto find = [&](int index, int id) -> const observed_slot* {
@@ -322,25 +315,20 @@ void modules::pot_refill::render_overlay()
 		{
 			state.expected = maps::ItemStack{};
 			state.engine.arm(now, pot_refill_logic::delay(settings_snapshot, gen));
-			live_status = 6;
 		}
 		else if (result == pot_refill_logic::observation::timed_out)
 		{
 			state.expected = maps::ItemStack{};
-			live_status = 7;
 		}
-		else live_status = 8;
 		return;
 	}
-	if (state.engine.blocked()) { live_status = 7; return; }
+	if (state.engine.blocked()) return;
 	if (live_empty_hotbar == 0)
 	{
-		live_status = 3;
 		return;
 	}
 	if (live_health_potions == 0)
 	{
-		live_status = 4;
 		return;
 	}
 
@@ -348,24 +336,23 @@ void modules::pot_refill::render_overlay()
 	std::vector<pot_refill_logic::slot> candidates;
 	for (const auto& slot : slots) candidates.push_back(slot.data);
 	const auto action = pot_refill_logic::select(candidates, settings_snapshot.slot_order, gen);
-	if (!action) { live_status = 1; return; }
+	if (!action) return;
 	const auto* source = find(action->source_index, action->source_screen_id);
 	const auto* target = find(action->target_index, action->target_screen_id);
-	if (!source || !target) { live_status = 1; return; }
+	if (!source || !target) return;
 	// Re-read immediately before SWAP. Never replace any occupied hotbar slot.
 	auto source_stack = source->slot.getStack.call();
 	auto target_stack = target->slot.getStack.call();
 	if (!source_stack || !target_stack || platform::jni_context::clear_exception() ||
 		target_stack.isEmpty.call() != JNI_TRUE || !is_instant_health_potion(source_stack) ||
 		target->slot.canInsert.call(source_stack) != JNI_TRUE || platform::jni_context::clear_exception())
-	{ live_status = 2; return; }
+	{ return; }
 	state.expected = source_stack.copy.call();
-	if (!state.expected || platform::jni_context::clear_exception()) { live_status = 5; return; }
+	if (!state.expected || platform::jni_context::clear_exception()) return;
 
 	maps::SlotActionType swap_action = maps::SlotActionType{}.SWAP.get();
 	if (!swap_action || platform::jni_context::clear_exception())
 	{
-		live_status = 5;
 		return;
 	}
 
@@ -380,15 +367,10 @@ void modules::pot_refill::render_overlay()
 		swap_action,
 		player.toPlayerEntity());
 
-	if (!platform::jni_context::clear_exception())
-	{
-		live_status = 8;
-	}
-	else
+	if (platform::jni_context::clear_exception())
 	{
 		state.engine.stop();
 		state.expected = maps::ItemStack{};
-		live_status = 5;
 	}
 }
 
@@ -406,20 +388,4 @@ void modules::pot_refill::on_render_shutdown()
 void modules::pot_refill::render_options()
 {
 	gui::settings::render(settings_, module_settings::pot_refill::schema());
-	ImGui::TextDisabled("%s", "Last inventory scan:");
-	ImGui::TextDisabled("%s: %d | %s: %d", "Health Potions", live_health_potions,
-		"Empty Hotbar", live_empty_hotbar);
-	const char* status = "Open inventory to refill";
-	switch (live_status)
-	{
-	case 1: status = "Waiting for inventory"; break;
-	case 2: status = "Paused for manual interaction"; break;
-	case 3: status = "Hotbar is full"; break;
-	case 4: status = "No health potions in inventory"; break;
-	case 5: case 7: status = "Stopped: reopen inventory"; break;
-	case 6: status = "Refilling"; break;
-	case 8: status = "Checking inventory change"; break;
-	case 9: status = "Paused while menu is open"; break;
-	}
-	ImGui::TextDisabled("%s", status);
 }

@@ -93,8 +93,6 @@ namespace platform::adapter
         virtual maps::Iterable get_entities(const maps::ClientWorld& world) const = 0;
 
         // Movement & combat checks
-        virtual bool can_start_sprinting(const maps::ClientPlayerEntity& player, const maps::GameOptions& options) const = 0;
-        virtual bool is_totem(const maps::ItemStack& stack, const maps::Item& totem_item) const = 0;
         virtual maps::HitResult crosshair_target(const maps::MinecraftClient& client,
             const maps::ClientPlayerEntity& player, const maps::Entity& camera,
             double block_range, double entity_range, float delta) const = 0;

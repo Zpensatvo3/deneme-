@@ -183,16 +183,6 @@ namespace maps
 
         BEGIN_KLASS_DEF(WorldProperties, ONESTEP_MC_NAME("net/minecraft/class_638$class_5271"))
         jni::method<jlong, ONESTEP_MC_NAME("method_188")> getTime{ *this };
-#if !ONESTEP_MINECRAFT_26_1
-    // Unused historical time/weather helpers. 26.1 moved these responsibilities
-    // out of ClientLevelData; no active OneStep feature calls these declarations.
-    jni::method<jlong, ONESTEP_MC_NAME("method_217")> getTimeOfDay{ *this };
-    jni::method<jboolean, ONESTEP_MC_NAME("method_203")> isThundering{ *this };
-    jni::method<jboolean, ONESTEP_MC_NAME("method_156")> isRaining{ *this };
-    jni::method<jint, ONESTEP_MC_NAME("method_207")> getDifficulty{ *this };
-    jni::method<void, ONESTEP_MC_NAME("method_157"), jni::NOT_STATIC, jboolean> setRaining{ *this };
-    jni::method<void, ONESTEP_MC_NAME("method_29035"), jni::NOT_STATIC, jlong> setTimeOfDay{ *this };
-#endif
     END_KLASS_DEF()
 
         BEGIN_KLASS_DEF(Direction, ONESTEP_MC_NAME("net/minecraft/class_2350"))
