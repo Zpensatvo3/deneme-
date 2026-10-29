@@ -212,7 +212,7 @@ void modules::vape_module::render_overlay()
     if (!platform::jni_context::bind_current_thread()) { runtime_issue="Vape: render-thread JNI unavailable."; reset_requested.store(true); return; }
     if (reset_requested.exchange(false) || !enabled) state.reset();
     const auto window = gui::get_window();
-    if (!enabled || gui::draw || gui::loader_visible || gui::should_unload || !window ||
+    if (!enabled || gui::draw || !gui::runtime_ready.load(std::memory_order_acquire) || gui::should_unload || !window ||
         GetForegroundWindow() != window || conflict()) { state.reset(); if(!enabled)runtime_issue.clear(); return; }
     runtime_issue.clear();
     struct clear_on_exit { ~clear_on_exit() { platform::jni_context::clear_exception(); } } cleanup;

@@ -159,7 +159,7 @@ void legit_aim_engine::run(const config& requested, runtime& state, bool enabled
     }
     config settings = requested;
     const HWND window = gui::get_window();
-    if (!normalize(settings) || settings.strength <= 0 || gui::draw || gui::loader_visible ||
+    if (!normalize(settings) || settings.strength <= 0 || gui::draw || !gui::runtime_ready.load(std::memory_order_acquire) ||
         !window || GetForegroundWindow() != window) { reset(state); return; }
 
     struct clear_on_exit { ~clear_on_exit() { platform::jni_context::clear_exception(); } } clear_exception;

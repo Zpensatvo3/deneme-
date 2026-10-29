@@ -92,9 +92,6 @@ uygulamasını da derleyip çizer; yalnız fixture üzerinden geçen bir kontrol
 ```sh
 python scripts/Test-Infrastructure.py
 python -m unittest discover -s tests -p 'test_repository_hygiene.py' -v
-python scripts/Test-AimAssistSources.py
-python scripts/Test-TriggerbotSources.py
-python scripts/Test-JumpResetSources.py
 python scripts/Test-HybridBridge.py
 python scripts/Test-Offline.py --jobs 2
 python scripts/Test-GrimUI.py
@@ -108,6 +105,11 @@ gömülü sınıflarla sınar. Yalnız bu kontrol için `python scripts/Test-Tri
 PowerShell; Linux: clang++ veya g++). Geçici JNI kütüphanesi yalnız koordinatörü
 taklit eder; oyuna bağlanmaz. Dört hedef kimliği için binding protokolü sınanır;
 bu fixture kontrolü gerçek oyun mapping doğrulamasının yerine geçmez.
+
+Küçük UI model kontrolleri `tests/ui_models_test.cpp` içinde toplanmıştır;
+`python scripts/Test-Offline.py --test ui_models` ile çalışır. Java gameplay
+binding denetimleri `scripts/Test-GameplayBindings.py --client <client.jar>`
+üzerinden çalışır; 1.21.11 için ayrıca `--intermediary <mapping.jar>` verilir.
 
 Her yedi hedef için ayrıca `Test-Offline.py --test minecraft_version --test
 sdk_mappings --minecraft-version <hedef> --jobs 2`, üç 26.x hedefi için
@@ -128,7 +130,7 @@ kabulü tamamlanmadan bu kayıt tam platform doğrulaması sayılmaz.
 | `Test-Offline.py --jobs 2` | Son tam turda 47/47 geçti; gerçek Themes çizimi de dahil. |
 | `Test-GrimUI.py` | Gerçek ImGui/UI ve preference testleri geçti. |
 | `Test-AuthConfiguration.py` | 17 derleyici senaryosu geçti. |
-| AimAssist/Triggerbot/JumpReset source kontrolleri | Üçü de geçti; bunlar native DLL derlemesi değildir. |
+| AimAssist/Triggerbot/JumpReset | C++ offline ve Java denetleyici davranış testleri; native DLL derlemesi değildir. |
 | Yedi hedefin `minecraft_version` ve `sdk_mappings` testleri | 14/14 geçti. |
 | `test_minecraft*.py` | 21/21 geçti. |
 | Üç 26.x hedefinin `Test-Minecraft261Offline.py` denetimi | Üçü de geçti. |

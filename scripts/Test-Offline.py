@@ -11,10 +11,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = {
     "key_codes": ["tests/key_codes_test.cpp"],
-    "keybinds_presentation": ["tests/keybinds_presentation_test.cpp"],
-    "menu_background": ["tests/menu_background_test.cpp"],
-    "dock_layout": ["tests/dock_layout_test.cpp"],
-    "menu_input_policy": ["tests/menu_input_policy_test.cpp"],
+    "ui_models": ["tests/ui_models_test.cpp"],
     "popup_controls": ["tests/popup_controls_test.cpp", "include/imgui/imgui.cpp", "include/imgui/imgui_draw.cpp",
                        "include/imgui/imgui_widgets.cpp", "include/imgui/imgui_tables.cpp"],
     "menu_background_renderer": ["tests/menu_background_renderer_test.cpp", "src/ui/menu_background.cpp", "src/ui/themes_page.cpp",
@@ -74,7 +71,7 @@ def main():
                          "26.1": 26100, "26.1.1": 26101, "26.1.2": 26102}[args.minecraft_version]
             target_define = f"ONESTEP_MINECRAFT_VERSION={target_id}"
             command += [f"/D{target_define}"] if msvc else [f"-D{target_define}"]
-            if name in ("settings_renderer", "menu_background", "menu_background_renderer", "popup_controls"):
+            if name in ("settings_renderer", "ui_models", "menu_background_renderer", "popup_controls"):
                 command += [f"/I{ROOT / 'include'}"] if msvc else ["-I", str(ROOT / "include")]
             if name == "menu_background_renderer" and os.name != "nt":
                 command += ["-I", str(ROOT / "tests/support")]

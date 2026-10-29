@@ -19,7 +19,7 @@ namespace
     bool permitted()
     {
         const HWND window = gui::get_window();
-        return !gui::should_unload && !gui::draw && !gui::loader_visible &&
+        return !gui::should_unload && !gui::draw && gui::runtime_ready.load(std::memory_order_acquire) &&
             window && GetForegroundWindow() == window;
     }
 

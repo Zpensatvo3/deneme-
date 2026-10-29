@@ -19,7 +19,7 @@ namespace
     bool permitted()
     {
         const HWND window = gui::get_window();
-        return !gui::draw && !gui::loader_visible && !gui::should_unload &&
+        return !gui::draw && gui::runtime_ready.load(std::memory_order_acquire) && !gui::should_unload &&
             window && GetForegroundWindow() == window;
     }
     template<class T> T checked(JNIEnv* env, T value)

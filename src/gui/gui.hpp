@@ -19,7 +19,8 @@ namespace gui
 
 	inline bool draw = false;
 	inline std::atomic_bool should_unload{false};
-	inline bool loader_visible = true;
+	// Published by the worker after JNI, modules and the render hook are ready.
+	inline std::atomic_bool runtime_ready{false};
 	// Fixed shortcut: Click GUI is always opened with Right Shift.
 	inline constexpr int menu_key = VK_RSHIFT;
 	inline bool suppress_menu_key_until_release = false;

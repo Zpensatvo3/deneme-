@@ -263,7 +263,7 @@ namespace
     bool capture(scene& s,bool only_third_person=true,bool cosmetic_pose=true)
     {
         using platform::jni_context::clear_exception;
-        if (gui::draw || gui::loader_visible || gui::hud_editor_active || gui::should_unload ||
+        if (gui::draw || !gui::runtime_ready.load(std::memory_order_acquire) || gui::hud_editor_active || gui::should_unload ||
             !services::game::capture_client_context(s.context,true,false) || s.context.screen) return false;
         auto renderer=s.context.instance.gameRenderer.get();
         if (clear_exception() || !renderer) return false;

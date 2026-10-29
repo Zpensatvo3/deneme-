@@ -24,7 +24,6 @@
 #include "../modules/combat/jump_reset.hpp"
 #include "../modules/combat/triggerbot.hpp"
 #include "../friends/friends.hpp"
-#include "../loader/loader_ui.hpp"
 #include "../platform/input/key_codes.hpp"
 #include "../services/input/input_service.hpp"
 #include "../services/game/menu_input.hpp"
@@ -288,6 +287,15 @@ namespace
 		if (factory) factory->Release();
 		if (SUCCEEDED(com)) CoUninitialize();
 		return success;
+	}
+
+	void fail_renderer(const char* detail) noexcept
+	{
+		gui::runtime_ready.store(false, std::memory_order_release);
+		gui::should_unload.store(true, std::memory_order_release);
+		OutputDebugStringA("OneStep renderer: ");
+		OutputDebugStringA(detail);
+		OutputDebugStringA("\n");
 	}
 
 	bool panel_was_open = false;
@@ -601,12 +609,12 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 	{
 		window = current_window;
 		if (!window) {
-			loader_ui::fail("Minecraft render window was not available");
+			fail_renderer("Minecraft render window was not available");
 		}
 		else
 		{
 			// Injection happens from another process, so explicitly return the
-			// user to Minecraft before the first loader frame is presented.
+			// user to Minecraft before the first UI frame is presented.
 			focus_minecraft_window(window);
 		}
 
@@ -620,7 +628,7 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 
 		original_WndProc = (WNDPROC)SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR)detour_WndProc);
 		if (!original_WndProc) {
-			loader_ui::fail("Minecraft input window hook failed");
+			fail_renderer("Minecraft input window hook failed");
 		}
 
 		imGuiContext = ImGui::CreateContext();
@@ -811,7 +819,7 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 		else if (shortcut_pressed &&
 			!std::any_of(modules::get_modules().begin(), modules::get_modules().end(),
 				[](const modules::module* entry) { return entry->is_keybind_capture_active(); }) &&
-			!gui::should_unload && !gui::loader_visible)
+			!gui::should_unload && gui::runtime_ready.load(std::memory_order_acquire))
 		{
 			gui::draw = !gui::draw;
 		}
@@ -873,20 +881,6 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 		style.Colors[ImGuiCol_ScrollbarGrabActive] = accent;
 	}
 
-	// Runtime initialization controls when gameplay rendering starts.
-	// Inside Minecraft we only keep a headless readiness gate so gameplay
-	// modules cannot run before JNI/JVMTI initialization has finished.
-	if (gui::loader_visible)
-	{
-		const loader_ui::state loader_state = loader_ui::snapshot();
-		if (loader_state.completed || loader_state.closing)
-			gui::loader_visible = false;
-		else if (loader_state.failed)
-		{
-			gui::loader_visible = false;
-			gui::should_unload = true;
-		}
-	}
 
 	if (!gui::draw)
 	{
@@ -898,7 +892,7 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 	// Render HUD and ArrayList overlays
 	gui::hud_editor::restore_saved_layout();
 	gui::hud_editor_active = gui::draw && gui::hud_layout_editor_active;
-	if (!gui::loader_visible)
+	if (gui::runtime_ready.load(std::memory_order_acquire) && !gui::should_unload)
 	{
 		for (modules::module* module : modules::get_modules())
 		{
@@ -916,7 +910,7 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
             trigger->cancel_on_client_thread();
 	}
 
-	if (gui::draw && !gui::loader_visible)
+	if (gui::draw && gui::runtime_ready.load(std::memory_order_acquire))
 	{
 		const ImGuiViewport* reference_viewport = ImGui::GetMainViewport();
 
@@ -953,32 +947,32 @@ bool gui::init()
 	HMODULE opengl = GetModuleHandleA("opengl32.dll");
 	if (!opengl) 
 	{
-		loader_ui::fail("OpenGL runtime was not loaded");
+		fail_renderer("OpenGL runtime was not loaded");
 		return false;
 	}
 	wglSwapBuffers = (wglSwapBuffers_t)GetProcAddress(opengl, "wglSwapBuffers");
 
 	if (!wglSwapBuffers)
 	{
-		loader_ui::fail("wglSwapBuffers export was not found");
+		fail_renderer("wglSwapBuffers export was not found");
 		return false;
 	}
 
 	if (MH_Initialize() != MH_OK) 
 	{
-		loader_ui::fail("Native hook engine initialization failed");
+		fail_renderer("Native hook engine initialization failed");
 		return false;
 	}
 
 	if (MH_CreateHook(wglSwapBuffers, detour_wglSwapBuffers, (void**)&original_wglSwapBuffers) != MH_OK) 
 	{
-		loader_ui::fail("OpenGL hook creation failed");
+		fail_renderer("OpenGL hook creation failed");
 		return false;
 	}
 
 	if (MH_EnableHook(wglSwapBuffers) != MH_OK) 
 	{
-		loader_ui::fail("OpenGL hook activation failed");
+		fail_renderer("OpenGL hook activation failed");
 		return false;
 	}
 	return true;

@@ -29,7 +29,7 @@ namespace
 bool modules::shield_breaker::prepare_current_thread()
 {
     auto settings_snapshot = settings_.read();
-	if (gui::draw || gui::loader_visible)
+	if (gui::draw || !gui::runtime_ready.load(std::memory_order_acquire))
 		return false;
 
 	services::game::client_context context{};
@@ -88,7 +88,7 @@ bool modules::shield_breaker::prepare_current_thread()
 
 bool modules::shield_breaker::break_current_target()
 {
-	if (gui::draw || gui::loader_visible)
+	if (gui::draw || !gui::runtime_ready.load(std::memory_order_acquire))
 		return false;
 
 	services::game::client_context context{};
@@ -286,7 +286,7 @@ void modules::shield_breaker::run(::cache& cache)
 	const int safe_delay = std::clamp(settings_snapshot.return_delay, 75, 500);
 	const HWND window = gui::get_window();
 	if (!cache.is_valid() || !cache.player || !cache.instance || !window ||
-		GetForegroundWindow() != window || gui::draw || gui::loader_visible ||
+		GetForegroundWindow() != window || gui::draw || !gui::runtime_ready.load(std::memory_order_acquire) ||
 		now - switched_at >= std::chrono::milliseconds(safe_delay))
 	{
 		restore(cache);

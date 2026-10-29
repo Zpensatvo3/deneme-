@@ -24,17 +24,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Validate infrastructure and source boundaries
+      - name: Validate infrastructure
         run: |
           python scripts/Test-Infrastructure.py
           python -m unittest discover -s tests -p 'test_repository_hygiene.py' -v
-          python scripts/Test-AimAssistSources.py
-          python scripts/Test-TriggerbotSources.py
-          python scripts/Test-JumpResetSources.py
       - name: Test public config Worker
         run: node --test config-service/worker.test.mjs
-      - name: Check original hybrid game bridge offline
-        run: python scripts/Test-HybridBridge.py
+      - name: Test Java gameplay controllers and JNI contracts
+        run: |
+          python scripts/Test-HybridBridge.py
+          python scripts/Test-GameBridgeContracts.py
       - name: Verify shared client tick bytecode hooks
         run: |
           mkdir -p "$RUNNER_TEMP/client-tick-asm"

@@ -143,7 +143,7 @@ namespace
     bool permitted() {
         const HWND window = gui::get_window();
         return window && GetForegroundWindow() == window &&
-            !gui::draw && !gui::loader_visible && !gui::should_unload;
+            !gui::draw && gui::runtime_ready.load(std::memory_order_acquire) && !gui::should_unload;
     }
     jboolean JNICALL jump_permitted(JNIEnv*, jobject, jlong generation) {
         return permitted() && jump_reset_source && static_cast<std::uint64_t>(generation) == jump_expected_generation &&

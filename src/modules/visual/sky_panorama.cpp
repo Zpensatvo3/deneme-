@@ -340,7 +340,7 @@ struct sky_panorama::renderer::runtime
             JNIEnv* env;
             ~clear_on_exit() { if (env->ExceptionCheck()) env->ExceptionClear(); }
         } cleanup{env};
-        if (!current || !current->enabled || gui::should_unload || gui::loader_visible) return;
+        if (!current || !current->enabled || gui::should_unload || !gui::runtime_ready.load(std::memory_order_acquire)) return;
         const auto* module=modules::find_module_by_id("sky");
         if (!module || !module->enabled) return;
         try

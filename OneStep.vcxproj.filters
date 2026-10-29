@@ -79,9 +79,6 @@
     <Filter Include="Source Files\src\jvmti">
       <UniqueIdentifier>{9F4D6E0E-687C-53FD-BC7C-8873149364F9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\src\loader">
-      <UniqueIdentifier>{FD9A03ED-384E-5943-B56D-6C8AD3BD50BB}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\src\maths">
       <UniqueIdentifier>{03E70C87-4E05-5BF9-8BB8-8DF89587BB41}</UniqueIdentifier>
     </Filter>
@@ -434,9 +431,6 @@
     </ClCompile>
     <ClCompile Include="src\cache\cache.cpp">
       <Filter>Source Files\src\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="src\loader\loader_ui.cpp">
-      <Filter>Source Files\src\loader</Filter>
     </ClCompile>
     <ClCompile Include="src\friends\friends.cpp">
       <Filter>Source Files\src\friends</Filter>

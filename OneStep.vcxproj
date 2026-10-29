@@ -220,7 +220,6 @@
     <ClCompile Include="include\minhook\trampoline.c"><PrecompiledHeader>NotUsing</PrecompiledHeader><ForcedIncludeFiles></ForcedIncludeFiles></ClCompile>
     <ClCompile Include="src\pch.cpp"><PrecompiledHeader Condition="'$(Configuration)' == 'Release' or '$(LocalTestDll)' == 'true'">Create</PrecompiledHeader></ClCompile>
     <ClCompile Include="src\cache\cache.cpp" />
-    <ClCompile Include="src\loader\loader_ui.cpp" />
     <ClCompile Include="src\friends\friends.cpp" />
     <ClCompile Include="src\gui\widgets.cpp" />
     <ClCompile Include="src\gui\ui_state.cpp" />

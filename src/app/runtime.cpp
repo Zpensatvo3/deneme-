@@ -4,7 +4,6 @@
 #include "../configs/configs.hpp"
 #include "../configs/keybind_profile.hpp"
 #include "../gui/gui.hpp"
-#include "../loader/loader_ui.hpp"
 #include "../modules/module_lifecycle.hpp"
 #include "../platform/adapter/game_adapter.hpp"
 #include "../platform/jni/jvm_session.hpp"
@@ -26,6 +25,12 @@
 namespace
 {
     constexpr auto worker_interval = std::chrono::milliseconds(5);
+    void report_runtime_error(const char* detail) noexcept
+    {
+        OutputDebugStringA("OneStep runtime: ");
+        OutputDebugStringA(detail);
+        OutputDebugStringA("\n");
+    }
     bool emergency_exit_pressed()
     {
         // Once input is hooked, End must mean E0 4F, not NumPad 1 with
@@ -45,8 +50,8 @@ namespace
         ~runtime_services()
         {
             gui::should_unload.store(true, std::memory_order_release);
+            gui::runtime_ready.store(false, std::memory_order_release);
             if (configs_started) configs::shutdown();
-            loader_ui::closing();
             gui::draw = false;
             if (renderer_started) gui::shutdown();
             services::game::world_bridge::shutdown();
@@ -62,47 +67,39 @@ namespace
 void app::run()
 {
     platform::test_crash_report crash_report;
-    loader_ui::initialize();
+    gui::runtime_ready.store(false, std::memory_order_release);
     try
     {
-        loader_ui::stage(0, "Locating Minecraft JVM runtime");
         while (!GetModuleHandleW(L"jvm.dll"))
         {
             if (gui::should_unload || emergency_exit_pressed()) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
-        loader_ui::stage(1, "Attaching native JVM session");
         platform::jvm_session session;
-        if (!session.open()) { loader_ui::fail(session.error().c_str()); return; }
+        if (!session.open()) { report_runtime_error(session.error().c_str()); return; }
 
-        loader_ui::stage(2, "Resolving Minecraft runtime and mappings");
         if (!mc::matches_target(mc::detect(session.env(), session.classes())))
         {
             const auto message = std::string("This DLL requires Fabric ") + std::string(mc::target.name) +
                 "; detected " + mc::get_version_name() + ". Select the matching OneStep DLL.";
-            loader_ui::fail(message.c_str());
+            report_runtime_error(message.c_str());
             return;
         }
         platform::adapter::initialize(mc::get_version());
-        const std::string version = std::string("Detected runtime: Fabric ") + mc::get_version_name();
-        loader_ui::stage(2, version.c_str());
 
         cache game;
         runtime_services services{game};
         // Register before enabling render callbacks: the module list stays fixed
         // until gui::shutdown has joined the render side.
-        loader_ui::stage(3, "Registering client modules");
         services.modules_started = true;
         modules::init();
         configs::keybind_profile::initialize();
 
-        loader_ui::stage(4, "Installing OpenGL render hook");
-        if (!gui::init()) { loader_ui::fail("OpenGL renderer hook could not be installed"); return; }
+        if (!gui::init()) { report_runtime_error("OpenGL renderer hook could not be installed"); return; }
         services.renderer_started = true;
-        loader_ui::ready();
-
         if (gui::should_unload) return;
+        gui::runtime_ready.store(true, std::memory_order_release);
         services.configs_started = true;
         configs::initialize();
 
@@ -113,6 +110,6 @@ void app::run()
             std::this_thread::sleep_for(worker_interval);
         }
     }
-    catch (const std::exception& error) { loader_ui::fail(error.what()); }
-    catch (...) { loader_ui::fail("Onestep runtime initialization or execution failed"); }
+    catch (const std::exception& error) { report_runtime_error(error.what()); }
+    catch (...) { report_runtime_error("Onestep runtime initialization or execution failed"); }
 }

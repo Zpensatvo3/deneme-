@@ -81,7 +81,7 @@ void modules::sky::render_overlay()
             if (!state.reset()) return;
             state.generation=generation;
         }
-        if (!enabled || gui::loader_visible || gui::should_unload) { state.reset(); return; }
+        if (!enabled || !gui::runtime_ready.load(std::memory_order_acquire) || gui::should_unload) { state.reset(); return; }
         services::game::client_context context;
         if (!services::game::capture_client_context(context,true,false)) { state.reset(); return; }
         // The same biome registry is reused across dimensions and camera media.

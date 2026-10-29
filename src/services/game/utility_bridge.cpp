@@ -77,7 +77,7 @@ services::game::hybrid::result services::game::utility::update(feature operation
         return operation == feature::full_bright ? result::native_fallback : result::unavailable;
     if (!platform::jni_context::bind_current_thread()) return result::unavailable;
     const HWND window = gui::get_window();
-    active = active && !gui::should_unload && !gui::loader_visible;
+    active = active && !gui::should_unload && gui::runtime_ready.load(std::memory_order_acquire);
     if (operation != feature::full_bright)
         active = active && !gui::draw && window && GetForegroundWindow() == window;
     // Do not install or resolve bindings just because a disabled module renders for cleanup.

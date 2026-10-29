@@ -162,7 +162,7 @@ void modules::pot_refill::render_overlay()
 	}
 
 	const HWND game_window = gui::get_window();
-	if (!enabled || !game_window || GetForegroundWindow() != game_window || gui::loader_visible)
+	if (!enabled || !game_window || GetForegroundWindow() != game_window || !gui::runtime_ready.load(std::memory_order_acquire))
 	{
 		reset();
 		return;

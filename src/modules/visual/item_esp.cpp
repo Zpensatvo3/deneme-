@@ -9,7 +9,7 @@
 
 void modules::item_esp::render_overlay()
 {
-    if (!enabled || gui::loader_visible || gui::should_unload || !platform::jni_context::bind_current_thread()) return;
+    if (!enabled || !gui::runtime_ready.load(std::memory_order_acquire) || gui::should_unload || !platform::jni_context::bind_current_thread()) return;
     struct clear_on_exit { ~clear_on_exit() { platform::jni_context::clear_exception(); } } cleanup;
     try
     {

@@ -288,7 +288,7 @@ void modules::chams::render_overlay()
     using namespace chams_detail;
     if (!platform::jni_context::bind_current_thread()) return;
     if (reset_requested.exchange(false) || !enabled) state->clear();
-    if (!enabled || gui::loader_visible || gui::should_unload) return;
+    if (!enabled || !gui::runtime_ready.load(std::memory_order_acquire) || gui::should_unload) return;
     struct clear_on_exit { ~clear_on_exit() { platform::jni_context::clear_exception(); } } cleanup;
     try {
         jni::frame frame{128};

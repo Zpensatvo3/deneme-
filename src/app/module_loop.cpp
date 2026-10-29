@@ -12,7 +12,7 @@ namespace
     bool gameplay_input_allowed(const cache& game)
     {
         const HWND window = gui::get_window();
-        if (gui::draw || gui::loader_visible || !game.is_valid() || !window ||
+        if (gui::draw || !gui::runtime_ready.load(std::memory_order_acquire) || !game.is_valid() || !window ||
             GetForegroundWindow() != window) return false;
         try
         {
