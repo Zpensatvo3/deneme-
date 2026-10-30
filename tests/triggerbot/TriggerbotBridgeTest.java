@@ -90,12 +90,80 @@ public final class TriggerbotBridgeTest {
         check(c.field_1761.attacks == 1, "physical hold permits on-click");
         c = setup(); b = bridge(); tick(b, 0, 2, false);
         check(c.field_1761.attacks == 0, "critical-only rejects grounded hit");
-        c.field_1724.grounded = false; c.field_1724.field_6017 = .1; tick(b, 0, 2, false);
+        c.field_1724.grounded = false; c.field_1724.motion.field_1351 = -.1; c.field_1724.field_6017 = .1; tick(b, 0, 2, false);
         check(c.field_1761.attacks == 1, "falling critical permits hit");
-        c = setup(); b = bridge(); c.field_1724.grounded = false; tick(b, 0, 1, false);
+        c = setup(); b = bridge(); c.field_1724.grounded = false; c.field_1724.motion.field_1351 = .08; tick(b, 0, 1, false);
         check(c.field_1761.attacks == 0, "smart critical waits while rising");
-        time(b, "triggerCritical", System.nanoTime() - 200_000_000L); tick(b, 0, 1, false);
+        time(b, "triggerSmartDeadline", System.nanoTime() - 200_000_000L); tick(b, 0, 1, false);
         check(c.field_1761.attacks == 1, "smart critical wait expires");
+
+        c = setup(); b = bridge(); tick(b, 150, 0, false); ready(b);
+        long reactionReady = field("triggerReady").getLong(b);
+        c.fresh = false; tick(b, 150, 0, false);
+        check(c.field_1761.attacks == 0 && field("triggerTarget").get(b) == c.target,
+            "brief crosshair loss retains pending target without an attack");
+        check(field("triggerReady").getLong(b) == reactionReady, "crosshair loss preserves elapsed reaction");
+        time(b, "triggerMissingSince", System.nanoTime()); c.fresh = true; tick(b, 150, 0, false);
+        check(c.field_1761.attacks == 1, "same target reacquisition does not restart reaction");
+
+        c = setup(); b = bridge(); tick(b, 150, 0, false); ready(b);
+        c.fresh = false; tick(b, 150, 0, false);
+        time(b, "triggerMissingSince", System.nanoTime() - 300_000_000L);
+        c.fresh = true; tick(b, 150, 0, false);
+        check(c.field_1761.attacks == 0, "expired reacquisition starts a new reaction instead of replaying");
+
+        c = setup(); b = bridge(); tick(b, 150, 0, false); ready(b);
+        c.fresh = false; tick(b, 150, 0, false);
+        c.field_1724.field_6012 = 4; time(b, "triggerMissingSince", System.nanoTime());
+        c.fresh = true; tick(b, 150, 0, false);
+        check(c.field_1761.attacks == 0, "four game ticks expire reacquisition even before the wall-clock deadline");
+
+        c = setup(); b = bridge(); c.field_1724.grounded = false; c.field_1724.motion.field_1351 = .08;
+        tick(b, 0, 1, false); long smartDeadline = field("triggerSmartDeadline").getLong(b);
+        c.fresh = false; tick(b, 0, 1, false);
+        check(field("triggerSmartDeadline").getLong(b) == smartDeadline, "crosshair loss preserves Smart deadline");
+        time(b, "triggerMissingSince", System.nanoTime()); c.fresh = true;
+        c.field_1724.motion.field_1351 = -.08; c.field_1724.field_6017 = .05;
+        tick(b, 0, 1, false); check(c.field_1761.attacks == 1, "reacquired falling target uses existing critical opportunity");
+
+        c = setup(); b = bridge(); c.fresh = false; tick(b, 0, 1, false);
+        c.field_1724.field_6012 = 1; c.field_1724.field_6235 = 10;
+        c.field_1724.damage = new class_1282(c.target); c.field_1724.grounded = false;
+        c.field_1724.motion.field_1351 = .3; tick(b, 0, 1, false);
+        check(field("triggerPunishAttacker").get(b) == c.target, "incoming damage is observed while crosshair is empty");
+        c.field_1724.field_6012 = 2; c.fresh = true; tick(b, 0, 1, false);
+        check(c.field_1761.attacks == 0, "confirmed knockback gets a physics-based punish wait");
+        c.field_1724.field_6012 = 6; c.field_1724.motion.field_1351 = -.06; c.field_1724.field_6017 = .1;
+        tick(b, 0, 1, false); check(c.field_1761.attacks == 1, "punish attack is delivered on actual descent");
+        check(field("triggerPunishAttacker").get(b) == null, "delivered attack consumes punish opportunity");
+
+        c = setup(); b = bridge(); c.field_1724.grounded = false; c.field_1724.motion.field_1351 = .08;
+        c.target.field_22467.field_1352 = 2.85; c.target.motion.field_1352 = .3;
+        tick(b, 0, 1, false); check(c.field_1761.attacks == 1, "Smart does not wait for an opponent moving out of reach");
+
+        c = setup(); b = bridge(); c.fresh = false; tick(b, 0, 1, false);
+        c.field_1724.field_6012 = 1; c.field_1724.field_6235 = 10;
+        c.field_1724.damage = new class_1282(new class_1657());
+        c.field_1724.grounded = false; c.field_1724.motion.field_1351 = .3; c.fresh = true;
+        tick(b, 0, 1, false);
+        check(c.field_1761.attacks == 1, "another attacker's damage does not create a punish wait for the crosshair target");
+
+        c = setup(); b = bridge(); c.fresh = false; tick(b, 0, 1, false);
+        c.field_1724.field_6012 = 1; c.field_1724.field_6235 = 10;
+        c.field_1724.damage = new class_1282(null); c.fresh = true; tick(b, 0, 1, false);
+        check(c.field_1761.attacks == 1 && field("triggerPunishAttacker").get(b) == null,
+            "environmental damage does not invent an attacker or an impulse wait");
+
+        c = setup(); b = bridge(); class_1657 freshTarget = new class_1657(); c.queryTarget = freshTarget;
+        tick(b); check(c.field_1761.lastTarget == freshTarget, "fresh vanilla query overrides stale render crosshair cache");
+
+        c = setup(); b = bridge(); c.field_1724.grounded = false; c.field_1724.motion.field_1351 = -.1;
+        c.field_1724.field_6017 = .1; c.field_1724.cooldown = .6f;
+        net.onestep.hybrid.ManagerTestDriver.trigger(b,true,1,manual,.5f,.5f,0,0,0,0,2,false,true,false);
+        check(c.field_1761.attacks == 0, "critical-only rejects low charge even with a permissive cooldown setting");
+        c.field_1724.cooldown = 1.f;
+        net.onestep.hybrid.ManagerTestDriver.trigger(b,true,1,manual,.5f,.5f,0,0,0,0,2,false,true,false);
+        check(c.field_1761.attacks == 1, "critical-only accepts sufficient vanilla critical charge");
 
         c = setup(); b = bridge(); tick(b, 150, 0, false);
         net.onestep.hybrid.ManagerTestDriver.trigger(b,false, 1, 0, .9f, .9f, 0, 0, 0, 0, 0, false, true, false);
@@ -104,6 +172,12 @@ public final class TriggerbotBridgeTest {
         boolean failed = false; try { tick(b); } catch (ReflectiveOperationException expected) { failed = true; }
         c.field_1761.fail = false; time(b, "triggerNotBefore", 0); tick(b);
         check(failed && c.field_1761.attacks == 1 && field("triggerFailed").getBoolean(b), "partial attack failure suspends without replay");
+        c = setup(); b = bridge(); tick(b, 150, 0, false); ready(b);
+        final WorldBridge cancelled = b; final Throwable[] cancelError = {null};
+        Thread cancelling = new Thread(() -> { try { cancelled.cancelTrigger(); } catch (Throwable e) { cancelError[0] = e; } });
+        cancelling.start(); cancelling.join(); tick(b, 150, 0, false);
+        check(cancelError[0] == null && c.field_1761.attacks == 0,
+            "worker cancellation discards the old ready cycle before client-thread reactivation");
         c = setup(); b = bridge(); final WorldBridge threaded = b; final Throwable[] error = {null};
         Thread worker = new Thread(() -> { try { tick(threaded); } catch (Throwable e) { error[0] = e; } });
         worker.start(); worker.join(); check(error[0] == null && c.field_1761.attacks == 0, "worker cannot attack");
@@ -117,6 +191,8 @@ public final class TriggerbotBridgeTest {
 }
 class class_1297 {
     public double field_6017; public float field_6031; public class_243 field_22467 = new class_243();
+    public int field_6012; public class_243 motion = new class_243();
+    public class_243 method_18798() { return motion; }
     boolean alive = true, invisible, grounded = true;
     public boolean method_5805() { return alive; } public boolean method_5767() { return invisible; }
     public boolean method_24828() { return grounded; } public boolean method_5799() { return false; }
@@ -125,6 +201,8 @@ class class_1297 {
 }
 class class_1309 extends class_1297 {
     public int field_6273 = 100; boolean using;
+    public int field_6235; public class_1282 damage;
+    public class_1282 method_6081() { return damage; }
     public boolean method_6115() { return using; } public boolean method_6128() { return false; }
     public boolean method_6101() { return false; } public boolean method_6059(class_6880 entry) { return false; }
     public boolean method_6039() { return false; }
@@ -138,14 +216,15 @@ class class_746 extends class_1657 {
     public double method_55754() { return 4.5; } public double method_55755() { return 3.; }
     public void method_6104(class_1268 hand) { ++swings; }
     public static class_239 method_76763(class_1297 player, double blocks, double entities, float delta) {
-        return class_310.field_1700.fresh ? class_310.field_1700.field_1765 : new class_239();
+        class_310 c = class_310.field_1700;
+        return c.fresh ? (c.queryTarget == null ? c.field_1765 : new class_3966(c.queryTarget)) : new class_239();
     }
 }
 class class_310 {
     public static class_310 field_1700; public class_746 field_1724 = new class_746();
     public class_638 field_1687 = new class_638(); public class_437 field_1755;
     public class_315 field_1690 = new class_315(); public class_636 field_1761 = new class_636();
-    public class_239 field_1765; class_1657 target; boolean fresh = true;
+    public class_239 field_1765; class_1657 target; class_1297 queryTarget; boolean fresh = true;
     private final Thread thread = Thread.currentThread();
     public boolean method_18854() { return Thread.currentThread() == thread; }
     public class_1297 method_1560() { return field_1724; }
@@ -153,15 +232,21 @@ class class_310 {
 }
 class class_636 {
     int attacks; boolean fail;
+    class_1297 lastTarget;
     public void method_2918(class_1657 player, class_1297 entity) {
-        ++attacks; if (fail) throw new IllegalStateException("failure after attack");
+        ++attacks; lastTarget = entity; if (fail) throw new IllegalStateException("failure after attack");
     }
 }
 class class_1661 { public int field_7545; public class_1799 method_5438(int slot) { return new class_1799(); } }
 class class_1799 { public boolean method_7960() { return false; } public class_1792 method_7909() { return new class_1792(); } }
 class class_1792 { public class_6880$class_6883 method_40131() { return new class_6880$class_6883(); } }
 class class_1743 extends class_1792 {}
-class class_243 { public double field_1352, field_1350; }
+class class_243 { public double field_1352, field_1351, field_1350; }
+class class_1282 {
+    private final class_1297 attacker;
+    class_1282(class_1297 attacker) { this.attacker = attacker; }
+    public class_1297 method_5529() { return attacker; }
+}
 class class_239 {} class class_3966 extends class_239 { public class_1297 field_17592; class_3966(class_1297 e) { field_17592 = e; } }
 class class_6880 {} class class_6880$class_6883 extends class_6880 { public boolean method_40220(class_6862 tag) { return true; } }
 class class_6862 {} class class_3489 { public static class_6862 field_42611 = new class_6862(); }

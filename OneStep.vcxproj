@@ -28,7 +28,7 @@
   <Import Project="build-config\MinecraftTarget.props" />
   <Target Name="InvalidateMissingGameBridgeOutputs">
     <Delete Files="$(ProjectDir)assets\hybrid\manager_build.stamp"
-            Condition="!Exists('$(ProjectDir)assets\hybrid\ManagerCore.bin') Or !Exists('$(ProjectDir)assets\hybrid\module_manager_catalog.inc') Or !Exists('$(ProjectDir)assets\hybrid\catalog_values.hpp') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\GameBridge.class') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\ManagerBridge.class')" />
+            Condition="!Exists('$(ProjectDir)assets\hybrid\ManagerCore.bin') Or !Exists('$(ProjectDir)assets\hybrid\module_manager_catalog.inc') Or !Exists('$(ProjectDir)assets\hybrid\catalog_values.hpp') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\GameBridge.class') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\ManagerBridge.class') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\WorldBridge.class')" />
   </Target>
   <Target Name="BuildGameBridge" BeforeTargets="ClCompile;ResourceCompile" DependsOnTargets="InvalidateMissingGameBridgeOutputs"
           Inputs="$(ProjectDir)src\bridge\GameBridge.java;$(ProjectDir)src\bridge\UtilityBridge.java;$(ProjectDir)src\bridge\ItemBridge.java;$(ProjectDir)src\bridge\InventoryBridge.java;$(ProjectDir)src\bridge\WorldBridge.java;$(ProjectDir)src\bridge\ClientTickRelay.java;$(ProjectDir)src\bridge\Json.java;$(ProjectDir)src\bridge\ModuleCatalog.java;$(ProjectDir)src\bridge\ModuleManager.java;$(ProjectDir)src\bridge\ConfigManager.java;$(ProjectDir)src\bridge\ManagerBridge.java;$(ProjectDir)scripts\Pack-ManagerCore.py"

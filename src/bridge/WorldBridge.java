@@ -181,16 +181,24 @@ public class WorldBridge {
     // modules' existing weapon preparation; it never chooses a trigger attack.
     private native long triggerService(int operation, Object p, Object w, Object e, int value, long epoch);
     private Class<?> triggerLiving, triggerPlayerType, triggerMob, triggerAnimal, triggerAxe, triggerHitType;
-    private Field triggerCrosshair, triggerHitEntity, triggerSelected, triggerFall, triggerTicks, triggerYaw, triggerPos;
-    private Field triggerX, triggerZ;
+    private Field triggerHitEntity, triggerSelected, triggerFall, triggerTicks, triggerYaw, triggerPos;
+    private Field triggerX, triggerY, triggerZ, triggerHurt, triggerAge;
     private Method triggerAlive, triggerInvisible, triggerUsing, triggerInventory, triggerStack, triggerEmpty, triggerItem;
     private Method triggerCooldown, triggerGround, triggerWater, triggerSwimming, triggerFlying, triggerClimbing;
     private Method triggerRiding, triggerSprinting, triggerBlind, triggerBlocking, triggerId, triggerCamera, triggerPick;
     private Method triggerBlockRange, triggerEntityRange, triggerAttack, triggerSwing, triggerEntry, triggerInTag;
     private Method triggerGetWindow, triggerGetHandle, triggerGlfwMouse;
+    private Method triggerVelocity, triggerDamageSource, triggerDamageAttacker;
     private Object triggerBlindness, triggerHand, triggerSwordTag;
     private Object triggerPlayer, triggerWorld, triggerManager, triggerTarget, triggerInv;
-    private long triggerEpoch, triggerGeneration, triggerManual, triggerReady, triggerCritical = -1, triggerNotBefore;
+    private long triggerEpoch, triggerGeneration, triggerManual, triggerReady, triggerNotBefore;
+    private static final long TRIGGER_REACQUIRE_NS = 200_000_000L, TRIGGER_DAMAGE_CONFIRM_NS = 100_000_000L;
+    private static final long TRIGGER_PUNISH_NS = 650_000_000L, TRIGGER_TICK_NS = 50_000_000L;
+    private long triggerMissingSince, triggerSmartDeadline, triggerDamageAt, triggerSourceAt, triggerPunishUntil;
+    private int triggerMissingAge = -1, triggerObservedAge = -1, triggerSourceAge = -1, triggerDamageAge = -1;
+    private int triggerPreviousHurt;
+    private Object triggerLastDamageSource, triggerSourceAttacker, triggerPunishAttacker;
+    private boolean triggerSmartSeeded, triggerDamagePending, triggerPunishRising, triggerAwaitingImpulse;
     private int triggerSlot = -1, triggerLastTicks = -1, triggerPreparedSlot = -1, triggerPreparationTicks = -1;
     private float triggerThreshold, triggerLastCooldown;
     private boolean triggerFailed;
@@ -204,6 +212,7 @@ public class WorldBridge {
     private volatile boolean triggerActive;
     private volatile long triggerLastConfigTime;
     private volatile long triggerGenerationArg, triggerManualArg;
+    private final java.util.concurrent.atomic.AtomicBoolean triggerCancelPending = new java.util.concurrent.atomic.AtomicBoolean();
     private long triggerManagerGeneration = -1, jumpManagerGeneration = -1, totemManagerGeneration = -1;
 
     private void prepareTrigger() throws ReflectiveOperationException {
@@ -213,7 +222,6 @@ public class WorldBridge {
         triggerLiving = load("class_1309"); triggerPlayerType = load("class_1657");
         triggerMob = load("class_1308"); triggerAnimal = load("class_1429"); triggerAxe = load("class_1743");
         triggerHitType = load("class_3966");
-        triggerCrosshair = mappedField(clientType, "field_1765", hit, false);
         triggerHitEntity = mappedField(triggerHitType, "field_17592", entity, false);
         triggerSelected = mappedField(inv, "field_7545", int.class, false);
         triggerFall = mappedField(entity, "field_6017", double.class, false);
@@ -221,7 +229,14 @@ public class WorldBridge {
         triggerYaw = mappedField(entity, "field_6031", float.class, false);
         triggerPos = mappedField(entity, "field_22467", vec, false);
         triggerX = mappedField(vec, "field_1352", double.class, false);
+        triggerY = mappedField(vec, "field_1351", double.class, false);
         triggerZ = mappedField(vec, "field_1350", double.class, false);
+        triggerVelocity = mappedMethod(entity, "method_18798", vec);
+        triggerHurt = mappedField(triggerLiving, "field_6235", int.class, false);
+        triggerAge = mappedField(entity, "field_6012", int.class, false);
+        Class<?> source = load("class_1282");
+        triggerDamageSource = mappedMethod(triggerLiving, "method_6081", source);
+        triggerDamageAttacker = mappedMethod(source, "method_5529", entity);
         triggerAlive = mappedMethod(entity, "method_5805", boolean.class);
         triggerInvisible = mappedMethod(entity, "method_5767", boolean.class);
         triggerUsing = mappedMethod(playerType, "method_6115", boolean.class);
@@ -298,7 +313,12 @@ public class WorldBridge {
     }
 
     private void onTriggerTick(Object c) {
-        if (!triggerActive || triggerFailed || stopped || c == null) return;
+        if (c == null || stopped) return;
+        if (triggerCancelPending.getAndSet(false)) {
+            try { clearTriggerContext(c); } catch (ReflectiveOperationException | RuntimeException error) { triggerFailed = true; }
+            return;
+        }
+        if (!triggerActive || triggerFailed) return;
         final long now = System.nanoTime();
         if (now - triggerLastConfigTime > 200_000_000L) {
             try { cancelTrigger(); } catch (ReflectiveOperationException ignored) {}
@@ -421,34 +441,191 @@ public class WorldBridge {
         Object hit = triggerPick.invoke(null, p, blocks, entities, 1.f);
         return triggerHitType.isInstance(hit) ? triggerHitEntity.get(hit) : null;
     }
-    private boolean triggerEligible(Object c, Object p, Object w, Object m, Object e, int targets) throws ReflectiveOperationException {
+    private boolean triggerTargetValid(Object c, Object p, Object w, Object m, Object e, int targets) throws ReflectiveOperationException {
         if (c == null || !live(c, p, w) || m == null || e == null || e == p ||
             !triggerLiving.isInstance(e) || !(boolean) triggerAlive.invoke(e) || (boolean) triggerInvisible.invoke(e) ||
             (boolean) triggerUsing.invoke(p)) return false;
         boolean isPlayer = triggerPlayerType.isInstance(e), animal = triggerAnimal.isInstance(e), mob = triggerMob.isInstance(e);
         if (!(isPlayer || (targets >= 1 && mob && !animal) || (targets == 2 && animal))) return false;
         if (isPlayer && triggerService(0, p, w, e, 0, 0) == 0) return false;
-        return triggerFresh(c, p) == e;
+        return true;
+    }
+    private void resetTriggerSmart() {
+        triggerSmartSeeded = triggerDamagePending = triggerPunishRising = triggerAwaitingImpulse = false;
+        triggerObservedAge = triggerSourceAge = triggerDamageAge = -1; triggerPreviousHurt = 0;
+        triggerLastDamageSource = triggerSourceAttacker = triggerPunishAttacker = null;
+        triggerSourceAt = triggerDamageAt = triggerPunishUntil = triggerSmartDeadline = 0;
+    }
+    private double triggerVerticalSpeed(Object entity) throws ReflectiveOperationException {
+        Object motion = triggerVelocity.invoke(entity);
+        double y = motion == null ? Double.NaN : triggerY.getDouble(motion);
+        if (!Double.isFinite(y)) throw new IllegalStateException("Trigger vertical velocity");
+        return y;
+    }
+    private void observeTriggerDamage(Object p, int age, long now) throws ReflectiveOperationException {
+        int hurt = triggerHurt.getInt(p);
+        if (hurt < 0 || age < 0) throw new IllegalStateException("Trigger damage timeline");
+        Object source = triggerDamageSource.invoke(p);
+        if (!triggerSmartSeeded || age < triggerObservedAge) {
+            resetTriggerSmart(); triggerSmartSeeded = true; triggerObservedAge = age;
+            triggerPreviousHurt = hurt; triggerLastDamageSource = source; return;
+        }
+        boolean changed = source != triggerLastDamageSource;
+        if (changed) {
+            triggerLastDamageSource = source;
+            Object attacker = source == null ? null : triggerDamageAttacker.invoke(source);
+            triggerSourceAttacker = attacker != p && triggerLiving.isInstance(attacker) ? attacker : null;
+            triggerSourceAt = now; triggerSourceAge = age;
+        }
+        if (hurt > 0 && (hurt > triggerPreviousHurt || changed && triggerSourceAttacker != null)) {
+            triggerDamageAt = now; triggerDamageAge = age; triggerDamagePending = true;
+            triggerPunishAttacker = null; triggerPunishUntil = 0; triggerPunishRising = false;
+            triggerSmartDeadline = 0; triggerAwaitingImpulse = false;
+        }
+        triggerPreviousHurt = hurt; triggerObservedAge = age;
+        // Damage source and hurt packets may become visible in adjacent ticks.
+        // Do not reuse an attacker outside this short confirmation window.
+        if (triggerDamagePending) {
+            if (now - triggerDamageAt > TRIGGER_DAMAGE_CONFIRM_NS || age - triggerDamageAge > 2)
+                triggerDamagePending = false;
+            else if (triggerSourceAttacker != null && triggerSourceAge >= 0 &&
+                Math.abs((long) age - triggerSourceAge) <= 2 && now - triggerSourceAt <= TRIGGER_DAMAGE_CONFIRM_NS) {
+                triggerPunishAttacker = triggerSourceAttacker;
+                triggerPunishUntil = triggerDamageAt + TRIGGER_PUNISH_NS; triggerDamagePending = false;
+            }
+        }
+        if (triggerPunishAttacker != null) {
+            boolean ground = (boolean) triggerGround.invoke(p);
+            if (now - triggerPunishUntil >= 0 || age - triggerDamageAge > 13 || ground && triggerPunishRising) {
+                triggerPunishAttacker = null; triggerPunishUntil = 0; triggerPunishRising = false;
+            } else if (!ground && triggerVerticalSpeed(p) > 1.e-5) triggerPunishRising = true;
+        }
+    }
+    private boolean triggerCriticalPossible(Object p) throws ReflectiveOperationException {
+        return !(boolean) triggerWater.invoke(p) && !(boolean) triggerSwimming.invoke(p) &&
+            !(boolean) triggerFlying.invoke(p) && !(boolean) triggerClimbing.invoke(p) &&
+            !(boolean) triggerRiding.invoke(p) && !(boolean) triggerSprinting.invoke(p) &&
+            !(boolean) triggerBlind.invoke(p, triggerBlindness);
+    }
+    private boolean triggerCriticalReady(Object p) throws ReflectiveOperationException {
+        double fall = ((Number) triggerFall.get(p)).doubleValue();
+        float charge = (float) triggerCooldown.invoke(p, .5f);
+        if (!Double.isFinite(fall) || !Float.isFinite(charge) || charge < 0 || charge > 1)
+            throw new IllegalStateException("Trigger critical snapshot");
+        return triggerCriticalPossible(p) && !(boolean) triggerGround.invoke(p) &&
+            fall > 0 && triggerVerticalSpeed(p) < -1.e-5 && charge > .9f;
+    }
+    private boolean triggerRangeForecast(Object p, Object e, int ticks) throws ReflectiveOperationException {
+        Object a = triggerPos.get(p), b = triggerPos.get(e), av = triggerVelocity.invoke(p), bv = triggerVelocity.invoke(e);
+        if (a == null || b == null || av == null || bv == null) return false;
+        double x = triggerX.getDouble(b) - triggerX.getDouble(a);
+        double z = triggerZ.getDouble(b) - triggerZ.getDouble(a);
+        double vx = triggerX.getDouble(bv) - triggerX.getDouble(av), vz = triggerZ.getDouble(bv) - triggerZ.getDouble(av);
+        double reach = (double) triggerEntityRange.invoke(p);
+        // A conservative horizontal forecast, not a promise about packets,
+        // collisions or server position. A fresh vanilla ray is still mandatory.
+        return Double.isFinite(x) && Double.isFinite(z) && Double.isFinite(vx) && Double.isFinite(vz) &&
+            Double.isFinite(reach) && reach > .1 && Math.hypot(x + vx * ticks, z + vz * ticks) <= reach - .1;
+    }
+    private int triggerSmartDecision(Object p, Object e, int age, long now, int criticals, boolean sword, float cooldown)
+        throws ReflectiveOperationException {
+        // 0 = wait, 1 = ordinary attack, 2 = require a real critical at delivery.
+        if (criticals == 0) return 1;
+        if (triggerCriticalReady(p)) return 2;
+        if (criticals == 2) return 0;
+        if (!sword || !triggerCriticalPossible(p)) return 1;
+        boolean ground = (boolean) triggerGround.invoke(p);
+        double vy = triggerVerticalSpeed(p), fall = ((Number) triggerFall.get(p)).doubleValue();
+        if (!Double.isFinite(fall)) throw new IllegalStateException("Trigger fall distance");
+        boolean incoming = triggerPunishAttacker == e && now - triggerPunishUntil < 0;
+        if (ground) {
+            // A confirmed incoming hit can precede its velocity by one tick.
+            if (!incoming || triggerPunishRising || age - triggerDamageAge > 2) return 1;
+            if (!triggerRangeForecast(p, e, 2)) return 1;
+            if (triggerSmartDeadline == 0) {
+                triggerSmartDeadline = now + 2 * TRIGGER_TICK_NS; triggerAwaitingImpulse = true;
+            }
+            return now - triggerSmartDeadline < 0 ? 0 : 1;
+        }
+        if (triggerAwaitingImpulse) { triggerAwaitingImpulse = false; triggerSmartDeadline = 0; }
+        int descent = 0;
+        if (vy >= -1.e-5) {
+            double predicted = vy;
+            while (predicted >= -1.e-5 && descent <= 6) { predicted = (predicted - .08) * .98; ++descent; }
+            if (descent > (incoming && triggerPunishRising ? 6 : 2)) return 1;
+        } else if (fall <= 0) return 1;
+        float criticalCharge = (float) triggerCooldown.invoke(p, .5f);
+        float nextCharge = (float) triggerCooldown.invoke(p, 1.f);
+        if (!Float.isFinite(criticalCharge) || !Float.isFinite(nextCharge)) return 1;
+        int chargeTicks = 0;
+        if (criticalCharge <= .9f) {
+            float rate = nextCharge - cooldown;
+            if (rate <= 0) return 1;
+            chargeTicks = (int) Math.ceil((.9001f - criticalCharge) / rate);
+        }
+        int horizon = Math.max(descent, chargeTicks);
+        int budget = incoming && triggerPunishRising ? 7 : 3;
+        if (horizon >= budget || !triggerRangeForecast(p, e, Math.max(1, horizon))) return 1;
+        if (triggerSmartDeadline == 0) {
+            long wait = (horizon + 1L) * TRIGGER_TICK_NS;
+            if (incoming) wait = Math.min(wait, triggerPunishUntil - now);
+            triggerSmartDeadline = now + wait;
+        }
+        return now - triggerSmartDeadline < 0 ? 0 : 1;
+    }
+    private boolean triggerReacquireExpired(long now, int age) {
+        return triggerMissingAge >= 0 && (now - triggerMissingSince >= TRIGGER_REACQUIRE_NS ||
+            age < triggerMissingAge || age - triggerMissingAge >= 4);
+    }
+    private void clearTriggerTarget() throws ReflectiveOperationException {
+        triggerService(5, triggerPlayer, triggerWorld, null, 0, 0);
+        triggerTarget = null; triggerPreparedSlot = triggerPreparationTicks = -1;
+        triggerReady = triggerMissingSince = triggerSmartDeadline = 0; triggerMissingAge = -1;
+        triggerAwaitingImpulse = false;
+    }
+    private void pauseTriggerTarget(Object c, Object p, Object w, Object m, int targets, int age, long now)
+        throws ReflectiveOperationException {
+        if (triggerPreparedSlot >= 0) { cancelTrigger(); return; }
+        if (triggerTarget == null) return;
+        if (!triggerTargetValid(c, p, w, m, triggerTarget, targets)) { clearTriggerTarget(); return; }
+        if (triggerMissingAge < 0) { triggerMissingSince = now; triggerMissingAge = age; }
+        if (triggerReacquireExpired(now, age)) { clearTriggerTarget(); return; }
+        // Release attack ownership while blind, but retain this target's reaction
+        // and Smart deadlines. No synthetic input or attack is queued for return.
+        if (triggerService(1, p, w, null, -1, 0) == 0) cancelTrigger();
     }
     private void triggerCycle(long now, float low, float high, int reactionLow, int reactionHigh) {
         java.util.concurrent.ThreadLocalRandom r = java.util.concurrent.ThreadLocalRandom.current();
         triggerThreshold = low == high ? low : (float) r.nextDouble(low, high);
         triggerReady = now + (reactionLow == reactionHigh ? reactionLow : r.nextInt(reactionLow, reactionHigh + 1)) * 1_000_000L;
-        triggerCritical = -1;
+        triggerSmartDeadline = 0;
+        triggerAwaitingImpulse = false;
+    }
+    private void clearTriggerContext(Object c) throws ReflectiveOperationException {
+        triggerActive = false;
+        try {
+            triggerService(5, triggerPlayer != null ? triggerPlayer : player.get(c),
+                triggerWorld != null ? triggerWorld : world.get(c), null, 0, 0);
+        } finally {
+            triggerPlayer = triggerWorld = triggerManager = triggerTarget = triggerInv = null;
+            triggerSlot = triggerPreparedSlot = triggerPreparationTicks = triggerLastTicks = -1;
+            triggerLastCooldown = 0; triggerReady = triggerMissingSince = 0; triggerMissingAge = -1;
+            resetTriggerSmart();
+        }
     }
     public void cancelTrigger() throws ReflectiveOperationException {
         triggerActive = false;
-        Object c = client(); if (c == null) return;
-        // Do not retain targets or JNI objects across menus, focus/session loss or disable.
-        triggerService(5, triggerPlayer != null ? triggerPlayer : player.get(c),
-            triggerWorld != null ? triggerWorld : world.get(c), null, 0, 0);
-        triggerPlayer = triggerWorld = triggerManager = triggerTarget = triggerInv = null;
-        triggerSlot = triggerPreparedSlot = triggerPreparationTicks = triggerLastTicks = -1; triggerLastCooldown = 0; triggerCritical = -1;
-        triggerReady = 0;
+        Object c = client();
+        if (c == null) { triggerCancelPending.set(true); return; }
+        triggerCancelPending.getAndSet(false);
+        // A native/render-thread cancellation closes permission immediately,
+        // but mutable target/observer state is only purged on the client thread.
+        clearTriggerContext(c);
     }
     public void tickTrigger(long generation, long manual)
         throws ReflectiveOperationException {
         Object c = client(); if (c == null) return;
+        if (triggerCancelPending.getAndSet(false)) clearTriggerContext(c);
         if (!ManagerBridge.state().module("triggerbot").enabled()) { cancelTrigger(); return; }
         if (triggerFailed) return;
         prepare(4);
@@ -462,60 +639,77 @@ public class WorldBridge {
     }
 
     private void executeTrigger(Object c, long generation, long manual) throws ReflectiveOperationException {
+        if (triggerCancelPending.get()) { cancelTrigger(); return; }
         var state = ManagerBridge.state().module("triggerbot");
         if (!state.enabled()) { cancelTrigger(); return; }
-        if (triggerManagerGeneration != state.generation()) { cancelTrigger(); triggerManagerGeneration = state.generation(); triggerActive = true; }
+        if (triggerManagerGeneration != state.generation()) {
+            cancelTrigger(); triggerManagerGeneration = state.generation(); triggerActive = true;
+        }
         var cooldown = Json.array(state.settings().get("cooldown")); var reaction = Json.array(state.settings().get("reaction"));
         float low = ManagerBridge.decimal(cooldown.get(0)), high = ManagerBridge.decimal(cooldown.get(1));
         int reactionLow = Json.integer(reaction.get(0)), reactionHigh = Json.integer(reaction.get(1));
-        int targets = ManagerBridge.integer(state, "targets"), weapon = ManagerBridge.integer(state, "weapon"), criticals = ManagerBridge.integer(state, "criticals");
-        boolean onClick = ManagerBridge.flag(state, "on_click"), swingHand = ManagerBridge.flag(state, "swing_hand"), clickSimulation = ManagerBridge.flag(state, "click_simulation");
+        int targets = ManagerBridge.integer(state, "targets"), weapon = ManagerBridge.integer(state, "weapon");
+        int criticals = ManagerBridge.integer(state, "criticals");
+        boolean onClick = ManagerBridge.flag(state, "on_click"), swingHand = ManagerBridge.flag(state, "swing_hand");
+        boolean clickSimulation = ManagerBridge.flag(state, "click_simulation");
         final long now = System.nanoTime();
         try {
             if (onClick && !triggerLeftDown(c)) { cancelTrigger(); return; }
             if (clickSimulation) prepareTriggerSimulation();
-            Object p = player.get(c), w = world.get(c), m = manager.get(c), hit = triggerCrosshair.get(c);
-            Object e = triggerHitType.isInstance(hit) ? triggerHitEntity.get(hit) : null;
-            if (!triggerEligible(c, p, w, m, e, targets)) { cancelTrigger(); return; }
+            Object p = player.get(c), w = world.get(c), m = manager.get(c);
+            if (!live(c, p, w) || m == null || (boolean) triggerUsing.invoke(p) || triggerCamera.invoke(c) != p ||
+                triggerService(8, p, w, null, 0, generation) != manual) { cancelTrigger(); return; }
             Object inv = triggerInventory.invoke(p);
             int slot = inv == null ? -1 : triggerSelected.getInt(inv);
             if (slot < 0 || slot > 8 || !triggerWeapon(p, w, inv, slot, weapon)) { cancelTrigger(); return; }
             float cd = (float) triggerCooldown.invoke(p, 0.f);
-            int ticks = triggerTicks.getInt(p);
-            if (!Float.isFinite(cd) || cd < 0 || cd > 1 || ticks < 0) { cancelTrigger(); return; }
-            if (triggerPlayer != p || triggerWorld != w || triggerManager != m || triggerTarget != e ||
-                triggerInv != inv || triggerSlot != slot || triggerGeneration != generation) {
+            int ticks = triggerTicks.getInt(p), age = triggerAge.getInt(p);
+            if (!Float.isFinite(cd) || cd < 0 || cd > 1 || ticks < 0 || age < 0) { cancelTrigger(); return; }
+            if (triggerPlayer != p || triggerWorld != w || triggerManager != m ||
+                triggerInv != inv || triggerSlot != slot || triggerGeneration != generation ||
+                (triggerSmartSeeded && age < triggerObservedAge)) {
                 cancelTrigger();
-                triggerPlayer = p; triggerWorld = w; triggerManager = m; triggerTarget = e; triggerInv = inv;
+                triggerActive = true;
+                triggerPlayer = p; triggerWorld = w; triggerManager = m; triggerInv = inv;
                 triggerSlot = slot; triggerGeneration = generation; triggerManual = manual;
                 triggerLastTicks = ticks; triggerLastCooldown = cd;
-                if (++triggerEpoch <= 0) throw new IllegalStateException("Trigger epoch exhausted");
-                triggerCycle(now, low, high, reactionLow, reactionHigh);
             }
-            int id = (int) triggerId.invoke(e);
-            if (id < 0 || triggerService(1, p, w, e, id, triggerEpoch) == 0) { cancelTrigger(); return; }
-            boolean consumed = triggerPreparedSlot < 0 && (ticks < triggerLastTicks || (triggerLastCooldown >= .5f && cd < .25f));
+
+            // Observe incoming hits even when there is currently no crosshair
+            // entity. A lost ray must not erase the knockback/retaliation window.
+            observeTriggerDamage(p, age, now);
+            boolean consumed = triggerPreparedSlot < 0 &&
+                (ticks < triggerLastTicks || triggerLastCooldown >= .5f && cd < .25f);
             triggerLastTicks = ticks; triggerLastCooldown = cd;
             if (manual != triggerManual || consumed) {
                 triggerManual = manual;
                 if (triggerPreparedSlot >= 0) { cancelTrigger(); return; }
-                triggerCycle(now, low, high, reactionLow, reactionHigh); return;
+                clearTriggerTarget();
+                triggerPunishAttacker = null; triggerPunishUntil = 0; triggerDamagePending = false;
+                return;
             }
+
+            // The fresh vanilla query is authoritative. The render-side
+            // crosshairTarget may still describe the previous frame.
+            Object e = triggerFresh(c, p);
+            if (e == null) { pauseTriggerTarget(c, p, w, m, targets, age, now); return; }
+            if (!triggerTargetValid(c, p, w, m, e, targets)) { clearTriggerTarget(); return; }
+            if (triggerTarget != e || triggerReacquireExpired(now, age)) {
+                if (triggerPreparedSlot >= 0) { cancelTrigger(); return; }
+                clearTriggerTarget();
+                triggerTarget = e;
+                if (++triggerEpoch <= 0) throw new IllegalStateException("Trigger epoch exhausted");
+                triggerCycle(now, low, high, reactionLow, reactionHigh);
+            }
+            triggerMissingSince = 0; triggerMissingAge = -1;
+            int id = (int) triggerId.invoke(e);
+            if (id < 0 || triggerService(1, p, w, e, id, triggerEpoch) == 0) { cancelTrigger(); return; }
             if (triggerPreparedSlot >= 0 && ticks == triggerPreparationTicks) return;
             if ((triggerNotBefore != 0 && now - triggerNotBefore < 0) || now - triggerReady < 0 || cd < triggerThreshold) return;
-            boolean ground = (boolean) triggerGround.invoke(p);
-            double fall = ((Number) triggerFall.get(p)).doubleValue();
-            if (!Double.isFinite(fall)) { cancelTrigger(); return; }
-            boolean possible = !(boolean) triggerWater.invoke(p) && !(boolean) triggerSwimming.invoke(p) &&
-                !(boolean) triggerFlying.invoke(p) && !(boolean) triggerClimbing.invoke(p) &&
-                !(boolean) triggerRiding.invoke(p) && !(boolean) triggerSprinting.invoke(p) &&
-                !(boolean) triggerBlind.invoke(p, triggerBlindness);
-            boolean critical = possible && !ground && fall > 0;
-            if (criticals == 2 && !critical) return;
-            if (criticals == 1 && !ground && possible && !critical) {
-                if (triggerCritical < 0) triggerCritical = now;
-                if (now - triggerCritical < 150_000_000L) return;
-            } else triggerCritical = -1;
+            boolean sword = triggerSword(triggerStack.invoke(inv, slot));
+            int decision = triggerSmartDecision(p, e, age, now, criticals, sword, cd);
+            if (decision == 0) return;
+
             boolean shield = triggerShield(p, e);
             if (triggerPreparedSlot >= 0) {
                 if (triggerService(7, p, w, e, triggerPreparedSlot, 0) <= 0) { cancelTrigger(); return; }
@@ -524,25 +718,27 @@ public class WorldBridge {
                     ? (int) triggerService(2, p, w, e, 0, 0) : -1;
                 if (chosen >= 0 && chosen < 9) {
                     triggerPreparedSlot = triggerSlot = chosen;
-                    triggerPreparationTicks = ticks;
-                    triggerNotBefore = now + 25_000_000L; return;
+                    triggerPreparationTicks = ticks; triggerNotBefore = now + 25_000_000L; return;
                 }
                 if (shield && !triggerAxe(triggerStack.invoke(inv, slot))) return;
             }
-            // All checks and the vanilla calls happen synchronously on the client
-            // thread. Never queue a Windows click, replay failures or catch up.
+
+            // Never queue a hit for reacquisition. Revalidate all permissions,
+            // context and actual critical conditions immediately before delivery.
             Object current = client();
             float finalCooldown = (float) triggerCooldown.invoke(p, 0.f);
-            if (current != c || player.get(c) != p || world.get(c) != w || manager.get(c) != m ||
+            if (!triggerActive || triggerCancelPending.get() || current != c || player.get(c) != p || world.get(c) != w || manager.get(c) != m ||
                 triggerInventory.invoke(p) != inv || triggerSelected.getInt(inv) != triggerSlot ||
-                !triggerEligible(c, p, w, m, e, targets) ||
+                !triggerTargetValid(c, p, w, m, e, targets) ||
                 !Float.isFinite(finalCooldown) || finalCooldown > 1.f || finalCooldown < triggerThreshold ||
                 triggerService(8, p, w, e, 0, generation) != manual || !ManagerBridge.current("triggerbot", state.generation()) ||
                 (onClick && !triggerLeftDown(c)) ||
                 (triggerShield(p, e) && !triggerAxe(triggerStack.invoke(inv, triggerSlot)))) { cancelTrigger(); return; }
-            // Reserve the next cycle before a mutating call: an exception may
-            // follow an already sent packet, so this feature then suspends.
-            triggerNotBefore = now + 50_000_000L;
+            if (triggerFresh(c, p) != e) { pauseTriggerTarget(c, p, w, m, targets, age, now); return; }
+            if (decision == 2 && !triggerCriticalReady(p)) return;
+            // Reserve before mutation: failure after a sent packet suspends,
+            // rather than replaying or bursting when the crosshair returns.
+            triggerNotBefore = now + TRIGGER_TICK_NS;
             triggerAttack.invoke(m, p, e);
             triggerSwing.invoke(p, triggerHand);
             if (clickSimulation) simulateTriggerClick(c, p, w, generation, manual);
@@ -550,6 +746,7 @@ public class WorldBridge {
             triggerPreparedSlot = triggerPreparationTicks = -1;
             triggerLastTicks = triggerTicks.getInt(p);
             triggerLastCooldown = (float) triggerCooldown.invoke(p, 0.f);
+            triggerPunishAttacker = null; triggerPunishUntil = 0; triggerDamagePending = false;
             triggerCycle(now, low, high, reactionLow, reactionHigh);
         } catch (ReflectiveOperationException | RuntimeException error) {
             triggerFailed = true;
@@ -966,6 +1163,7 @@ public class WorldBridge {
         jumpOwner=null;
         triggerActive=false;
         triggerPlayer=triggerWorld=triggerManager=triggerTarget=triggerInv=null;
+        resetTriggerSmart(); triggerMissingAge=-1; triggerMissingSince=0;
         stopped=true; pearlOwner=null; pearlNonce=0;
     }
 }

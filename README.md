@@ -24,6 +24,10 @@ Click Aim Assist'in Aim Regions paneli Player ESP'nin ortak skin çizimini kulla
 
 Click Aim Assist'te `Last Target`, hedefi gerçek Java nesnesiyle izler. Hedef canlı, uygun ve reach içindeyken kısa görüş/FOV kayıplarında 250 ms kilidi korur, fakat geçersiz noktaya kamerayı çevirmez. Süre dolunca veya hedef ölür, kaybolur, arkadaş/bot/görünmez olur ya da reach dışına çıkarsa aynı taramadaki uygun alternatife geçer. Yeni sol tıklamada vanilla crosshair hedefi güncel bakış ışını, reach, FOV ve görüş kontrolünden geçirilerek öncelikli seçilir. Tuş bırakıldığında çekiş hemen durur; kilit en fazla 200 ms korunur. Menü, odak kaybı, oyuncu/dünya değişimi ve modül lifecycle sıfırlaması bütün takibi temizler.
 
+Triggerbot `Smart`, kılıçta sabit kritik beklemesi yerine dikey hız, düşüş, saldırı doluluğu ve kısa yatay reach öngörüsünü birlikte kullanır. Yakın bir iniş fırsatını veya istemcide güncel hasar kaynağı ve hurt artışıyla aynı rakibe bağlanabilen darbenin knockback sonrası kritik fırsatını bekler; hedef uzaklaşıyorsa ya da makul bir kritik penceresi yoksa ayarlanmış cooldown/reaction sınırları içinde normal vurur. Sunucu hasarını veya rakibin sonraki hareketini garanti etmez; otomatik zıplama/sprint değiştirme yapmaz. `Only`, gerçek düşüş ve vanilla kritik için yeterli doluluk olmadan vurmaz.
+
+Triggerbot hedefi render önbelleğinden değil güncel vanilla bakış sorgusundan alır. Aynı hedefin kısa crosshair kaybında bekleyen reaction/Smart süresi, en fazla 200 ms veya 4 oyun tick'i boyunca korunur; crosshair dışında saldırı gönderilmez ve geri dönüş için saldırı kuyruğa alınmaz. Farklı hedef veya süre aşımı yeni reaction başlatır; manuel saldırı, slot, oturum, menü ve lifecycle değişimleri eski döngüyü iptal eder. İstemci dışındaki iş parçacığından iptal, native izni hemen kapatır ve Java durumunu oyun iş parçacığında temizler.
+
 ## Derleme ve kontroller
 
 Windows derlemesi için x64 Developer PowerShell, MSVC C++20/Windows SDK, CMake, Ninja, Python 3 ve JDK 21 gerekir. Ninja yalnızca değişen girdilere bağlı işleri tekrar çalıştırır. 26.x oyun çalışma zamanı Java 25 gerektirir.
@@ -50,7 +54,7 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 
 `Build-GameBridge.ps1` veya CMake/MSBuild, Java sınıflarını derleyip [Pack-ManagerCore.py](scripts/Pack-ManagerCore.py) ile `ManagerCore.bin`, native factory tablosu ve DTO/UI varsayılan/sınır sabitlerini üretir. Bu üretilmiş dosyalar elle düzenlenmez; içerik aynıysa tekrar yazılmaz. MSBuild bu adımı C++ derlemesinden önce çalıştırır ve ayrı bir freshness stamp kullanır. Java yönetim kodu değiştiğinde aynı kalan native sabitler gereksiz yeniden derlemeye neden olmaz.
 
-Modül temizliği sırasında eski katalog taşıyan `ManagerCore.bin`, `ModuleCatalog.class` ve `ConfigManager.class` kaldırılmıştır. Bu çıktılar bir sonraki normal derlemede kaynaklardan yeniden üretilir; bu düzenlemede derleme veya test çalıştırılmadı.
+Modül temizliği sırasında eski katalog taşıyan `ManagerCore.bin`, `ModuleCatalog.class` ve `ConfigManager.class` kaldırılmıştır. Triggerbot güncellemesinde eski `WorldBridge.class` de kaynakla karışmaması için kaldırılmıştır. Bu çıktılar bir sonraki normal derlemede kaynaklardan yeniden üretilir; bu düzenlemede derleme veya test çalıştırılmadı.
 
 ## Public config servisi
 
@@ -58,7 +62,7 @@ Modül temizliği sırasında eski katalog taşıyan `ManagerCore.bin`, `ModuleC
 
 ## Tam klasör ve dosya ağacı
 
-949 mevcut proje dosyası; üçüncü taraf `include/` içerikleri dahildir. `.git/`, önbellekler ve üretilmiş yerel derleme çıktıları bu kaynak haritasına dahil değildir. Satır sonundaki notlar klasörün veya ana dosyanın görevini belirtir. Yeni dosya eklendiğinde bu envanter de güncellenmelidir.
+948 mevcut proje dosyası; üçüncü taraf `include/` içerikleri dahildir. `.git/`, önbellekler ve üretilmiş yerel derleme çıktıları bu kaynak haritasına dahil değildir. Satır sonundaki notlar klasörün veya ana dosyanın görevini belirtir. Yeni dosya eklendiğinde bu envanter de güncellenmelidir.
 
 ```text
 ./
@@ -102,8 +106,7 @@ Modül temizliği sırasında eski katalog taşıyan `ManagerCore.bin`, `ModuleC
 │   │   │           ├── ModuleManager$Snapshot.class
 │   │   │           ├── ModuleManager$State.class
 │   │   │           ├── ModuleManager.class
-│   │   │           ├── UtilityBridge.class
-│   │   │           └── WorldBridge.class
+│   │   │           └── UtilityBridge.class
 │   │   ├── catalog_values.hpp  # Java kataloğundan üretilen native varsayılan ve sınır değerleri
 │   │   └── module_manager_catalog.inc  # Java modül sırasından üretilen native factory tablosu
 │   ├── icons/  # Menü ve Spotify ikonları

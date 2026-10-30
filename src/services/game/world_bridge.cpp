@@ -328,7 +328,9 @@ namespace
             {"net/minecraft/class_638", ONESTEP_MC_NAME("net/minecraft/class_638")},
             {"net/minecraft/class_746", ONESTEP_MC_NAME("net/minecraft/class_746")},
             {"field_1350", ONESTEP_MC_NAME("field_1350")},
+            {"field_1351", ONESTEP_MC_NAME("field_1351")},
             {"field_1352", ONESTEP_MC_NAME("field_1352")},
+            {"method_18798", ONESTEP_MC_NAME("method_18798")},
             {"field_1655", ONESTEP_MC_NAME("field_1655")},
 #if ONESTEP_MINECRAFT_26_1
             {"field_1661", "clickCount"},
