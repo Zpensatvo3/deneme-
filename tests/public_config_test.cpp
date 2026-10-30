@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     for (int target : {12111, 26100, 26101, 26102}) {
         assert(env->CallStaticBooleanMethod(core, start, token, 1, target) == JNI_TRUE); checked();
         assert(modules::manager::connect({snapshot, request}));
-        assert(modules::manager::read()->modules.size() == 36);
+        assert(modules::manager::read()->modules.size() == 35);
         const auto captured = modules::manager::read();
         assert(modules::manager::enable("sprint", true));
         assert(!captured->modules.at("sprint").enabled && modules::manager::state("sprint").enabled);
@@ -132,5 +132,5 @@ int main(int argc, char** argv) {
         assert(!modules::manager::enable("sprint", true));
     }
     assert(vm->DestroyJavaVM() == JNI_OK);
-    std::cout << "PASS real JNI manager bundle: shared parent + 2 child loaders, 36 modules, 4 targets, DTO and config transactions\n";
+    std::cout << "PASS real JNI manager bundle: shared parent + 2 child loaders, 35 modules, 4 targets, DTO and config transactions\n";
 }

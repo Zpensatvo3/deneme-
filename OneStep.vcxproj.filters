@@ -1703,6 +1703,12 @@
     <ClInclude Include="src\ui\settings_renderer.hpp">
       <Filter>Header Files\src\ui</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\player_model_preview.hpp">
+      <Filter>Header Files\src\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\aim_region_picker.hpp">
+      <Filter>Header Files\src\ui</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\dock_layout.hpp">
       <Filter>Header Files\src\ui</Filter>
     </ClInclude>

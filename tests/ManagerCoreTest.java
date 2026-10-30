@@ -21,7 +21,7 @@ public final class ManagerCoreTest {
     private static String document(String... entries) { return "{\"modules\":[" + String.join(",", entries) + "]}"; }
     public static void main(String[] args) throws Exception {
         ModuleManager manager = new ModuleManager(); ConfigManager configs = new ConfigManager(manager);
-        check(ModuleCatalog.MODULES.size() == 36 && manager.snapshot().modules().size() == 36, "all 36 modules");
+        check(ModuleCatalog.MODULES.size() == 35 && manager.snapshot().modules().size() == 35, "all 35 modules");
         check(manager.snapshot().module("anti_bot").enabled(), "anti bot default");
         check(manager.snapshot().module("watermark").enabled() && manager.snapshot().module("arraylist").enabled(), "HUD defaults");
         var held = manager.snapshot();
@@ -58,8 +58,8 @@ public final class ManagerCoreTest {
         check(Json.integer(Json.array(trigger.get("reaction")).get(0)) == 5, "pair sorted");
         check(!configs.importConfig(bytes(document(entry("triggerbot", true, 0, "{\"sword_only\":true,\"axe_only\":true}"))), false).success(), "ambiguous legacy weapon rejected");
         check(!configs.importConfig(bytes(document(entry("triggerbot", true, 0, "{\"players\":false}"))), false).success(), "unrepresentable targets rejected");
-        check(configs.importConfig(bytes(document(entry("blatant_click_aim_assist", true, 0, "{\"aim_point\":2}"))), false).success(), "blatant legacy enum");
-        check(Json.integer(manager.snapshot().module("blatant_click_aim_assist").settings().get("aim_point")) == 4, "blatant enum converted");
+        check(configs.importConfig(bytes(document(entry("click_aim_assist", true, 0, "{\"aim_point\":2}"))), false).success(), "click aim legacy enum");
+        check(Json.array(manager.snapshot().module("click_aim_assist").settings().get("aim_regions")).size() == 10, "legacy click aim migrated to regions");
         check(configs.importConfig(bytes(document(entry("auto_totem", false, 10, "{\"delay\":5}"), entry("legit_auto_totem", true, 11, "{}"))), false).success(), "totem aliases merged");
         var totem = manager.snapshot().module("auto_totem");
         check(totem.enabled() && totem.keybind() == 11 && Json.integer(totem.settings().get("mode")) == 1, "legit enabled selects random mode");
@@ -104,6 +104,6 @@ public final class ManagerCoreTest {
             ManagerBridge.stop(9); check(ManagerBridge.revision() == 0, "owner session released");
         }
         check(!ManagerBridge.start(9, ModuleManager.ABI, 12108), "unsupported build rejected");
-        System.out.println("Manager core: " + checks + " checks passed (36 modules, 4 targets)");
+        System.out.println("Manager core: " + checks + " checks passed (35 modules, 4 targets)");
     }
 }

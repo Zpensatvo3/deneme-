@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def catalog(output: Path):
     source = (ROOT / "src/bridge/ModuleCatalog.java").read_text(encoding="utf-8")
     ids = re.findall(r'^\s*m\("([a-z0-9_]+)"', source, re.M)
-    if len(ids) != 36 or len(set(ids)) != 36:
-        raise SystemExit("ModuleCatalog must declare all 36 unique native factories")
+    if len(ids) != 35 or len(set(ids)) != 35:
+        raise SystemExit("ModuleCatalog must declare all 35 unique native factories")
     lines = ["// Generated from ModuleCatalog.java. Do not edit."]
     for identifier in ids:
         factory = "&modules::create_vape_aim" if identifier == "vape_aim_assist" else (
@@ -50,7 +50,7 @@ def values(output: Path):
         kind = int(kind)
         default = json.loads(json.loads(initial))
         prefix = f"{identifier}_{key}"
-        cpp_type = "bool" if kind == 0 else "int" if kind in (3, 4, 7) else "float"
+        cpp_type = "bool" if kind == 0 else "int" if kind in (3, 4, 7, 9) else "float"
 
         def literal(value):
             if isinstance(value, bool):
@@ -62,11 +62,13 @@ def values(output: Path):
         if kind == 8:
             strings = ", ".join(json.dumps(item, ensure_ascii=True) for item in default)
             lines.append(f"inline const std::vector<std::string> {prefix}_default{{{strings}}};")
+        elif kind == 9:
+            lines.append(f"inline const std::vector<int> {prefix}_default{{{', '.join(map(literal, default))}}};")
         elif isinstance(default, list):
             lines.append(f"inline constexpr {cpp_type} {prefix}_default[]{{{', '.join(map(literal, default))}}};")
         else:
             lines.append(f"inline constexpr {cpp_type} {prefix}_default = {literal(default)};")
-        if kind in (1, 2, 4, 6, 7):
+        if kind in (1, 2, 4, 6, 7, 9):
             lines.append(f"inline constexpr {cpp_type} {prefix}_minimum = {literal(float(low))};")
             lines.append(f"inline constexpr {cpp_type} {prefix}_maximum = {literal(float(high))};")
     lines.append("}")

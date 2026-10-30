@@ -8,11 +8,21 @@ Windows x64 üzerinde çalışan C++20 Minecraft Fabric istemcisi. Tam hedefler:
 
 C++ menü, görsel çizim, platform erişimi ve JNI bağlantılarını yönetir. Java oyun kontrolcüleri `src/bridge/` altındadır; gömülü çıktıları `assets/hybrid/` ve `assets/skybridge/` içindedir. Başlangıç tamamlanmadan çalışmayı `gui::runtime_ready` engeller. Launcher, lisans/auth servisi ve loader ekranı bulunmaz.
 
-36 modülün kimlik, kategori, varsayılan ve ayar şemalarının tek otoritesi [ModuleCatalog.java](src/bridge/ModuleCatalog.java) dosyasıdır. [ModuleManager.java](src/bridge/ModuleManager.java) aç/kapa, kısayol, revision ve lifecycle nesillerini; [ConfigManager.java](src/bridge/ConfigManager.java) doğrulama, eski config dönüşümleri ve atomik import/export işlemlerini yönetir. Ayarların native görünüm envanteri [settings_manifest.json](src/modules/settings_manifest.json), sürüm ve mapping envanteri [manifest.json](src/sdk/minecraft/common/manifest.json) içindedir.
+35 modülün kimlik, kategori, varsayılan ve ayar şemalarının tek otoritesi [ModuleCatalog.java](src/bridge/ModuleCatalog.java) dosyasıdır. [ModuleManager.java](src/bridge/ModuleManager.java) aç/kapa, kısayol, revision ve lifecycle nesillerini; [ConfigManager.java](src/bridge/ConfigManager.java) doğrulama, eski config dönüşümleri ve atomik import/export işlemlerini yönetir. Ayarların native görünüm envanteri [settings_manifest.json](src/modules/settings_manifest.json), sürüm ve mapping envanteri [manifest.json](src/sdk/minecraft/common/manifest.json) içindedir.
 
 [ManagerBridge.java](src/bridge/ManagerBridge.java) bütün gameplay köprülerinin paylaştığı oyun classloader'ına yüklenir. ABI, tam hedef sürüm veya oturum sahibi uyuşmazsa başlangıç durur; eski native yönetim yoluna dönüş yapılmaz. C++ tarafındaki [manager.cpp](src/modules/core/manager.cpp) yalnızca değişen revision için bütün snapshot'ı yeniler. Callback boyunca sabitlenen görünüm sayesinde farklı revision'lardan ayar ve enabled alanları karışmaz. UI ve kısayollar Java'ya istek gönderir; [settings_store.hpp](src/modules/core/settings_store.hpp) bağımsız ayar deposu değil, salt okunur DTO önbelleğidir.
 
 Public config biçimi ve yerel keybind dosyası korunur. Hatalı config hiçbir modüle kısmen uygulanmaz; aynı config'in tekrar yüklenmesi bekleyen oyun işlemlerini sıfırlar. Watermark/ArrayList ayarları da ortak yönetime dahildir; menü teması ve pencere tercihleri native kalır. Native gameplay motorları bu değişiklikle Java'ya taşınmamıştır. Java gameplay kontrolcüleri ise ayarları JNI parametreleri yerine manager snapshot'ından okur.
+
+Click Aim Assist'in kimliği `click_aim_assist` olarak sadeleştirildi; önceki adla kaydedilmiş public config ve yerel kısayollar import sırasında yeni kimliğe aktarılır. Normal Aim Assist ayrı bir modül olarak korunur.
+
+Click Aim Assist'in ayrı mesafe ayarı yoktur: hedef seçimi ve hedef kilidinin mesafe sınırı oyuncunun vanilla entity reach değerinden (`getEntityInteractionRange`) okunur. Reach okunamazsa nişan desteği durur; eski config'lerdeki `max_distance` alanı bu modül için dikkate alınmaz.
+
+Click Aim Assist'te `Minecraft FOV` (30–110), vanilla ayarındaki gibi dikey perspektif açısıdır. Örneğin 110, oyuncunun bakışına göre aynı pencere oranında Minecraft'ın nominal 110 FOV görüş alanını kapsar; yatay sınır en-boy oranından türetilir. Bütün seçili bölgeler aynı dikdörtgen görüş hacmini kullanır; arkadaki noktalar kabul edilmez. Bu ayar kamera FOV'unu değiştirmez; sprint/zoom gibi dinamik render çarpanlarını otomatik kopyalamaz.
+
+Click Aim Assist'in Aim Regions paneli Player ESP'nin ortak skin çizimini kullanır. Baş, gövde, iki kol ve iki bacakta 10'ar hücre olmak üzere 60 bölgeden en fazla 10'u seçilir; seçim Java config'inde `aim_regions` tamsayı listesi olarak saklanır (0–59). Varsayılan gövdenin 10 hücresidir; boş seçim düzeltmeyi kapatır. Sol tuşun her basılışında, seçili bölgelerden görünür ve vanilla reach içindeki, imlece perspektif olarak en yakın merkez seçilir ve o hedef için korunur. Bakış ışını seçili herhangi bir bölgedeyse düzeltme yapılmaz; bir bölgeye ulaşıldığında aynı tıklamada o hedef için tekrar deneme yapılmaz. Mesafe ölçütü dünya uzaklığı değil, ekran merkezine izdüşüm uzaklığıdır. Bölgeler hedefin yönü ve mevcut hitbox boyutlarına eşlenmiş istemci geometrisidir; animasyonlu kemik hitbox'ları oluşturmaz, gerçek hitbox/reach'i genişletmez. Gerçek saldırı paketi/cooldown yerine fiziksel sol tuş başlangıcı esas alınır.
+
+Click Aim Assist'te `Last Target`, hedefi gerçek Java nesnesiyle izler. Hedef canlı, uygun ve reach içindeyken kısa görüş/FOV kayıplarında 250 ms kilidi korur, fakat geçersiz noktaya kamerayı çevirmez. Süre dolunca veya hedef ölür, kaybolur, arkadaş/bot/görünmez olur ya da reach dışına çıkarsa aynı taramadaki uygun alternatife geçer. Yeni sol tıklamada vanilla crosshair hedefi güncel bakış ışını, reach, FOV ve görüş kontrolünden geçirilerek öncelikli seçilir. Tuş bırakıldığında çekiş hemen durur; kilit en fazla 200 ms korunur. Menü, odak kaybı, oyuncu/dünya değişimi ve modül lifecycle sıfırlaması bütün takibi temizler.
 
 ## Derleme ve kontroller
 
@@ -40,13 +50,15 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 
 `Build-GameBridge.ps1` veya CMake/MSBuild, Java sınıflarını derleyip [Pack-ManagerCore.py](scripts/Pack-ManagerCore.py) ile `ManagerCore.bin`, native factory tablosu ve DTO/UI varsayılan/sınır sabitlerini üretir. Bu üretilmiş dosyalar elle düzenlenmez; içerik aynıysa tekrar yazılmaz. MSBuild bu adımı C++ derlemesinden önce çalıştırır ve ayrı bir freshness stamp kullanır. Java yönetim kodu değiştiğinde aynı kalan native sabitler gereksiz yeniden derlemeye neden olmaz.
 
+Modül temizliği sırasında eski katalog taşıyan `ManagerCore.bin`, `ModuleCatalog.class` ve `ConfigManager.class` kaldırılmıştır. Bu çıktılar bir sonraki normal derlemede kaynaklardan yeniden üretilir; bu düzenlemede derleme veya test çalıştırılmadı.
+
 ## Public config servisi
 
 [config-service/](config-service/) istemciden bağımsız Cloudflare Worker/D1 servisidir. Elle anahtar veya kullanıcı girişi istemez; yayın sahipliği istemcinin otomatik oluşturup DPAPI ile sakladığı kurulum sırrıyla belirlenir. Sunucu yalnızca hash saklar. Native HTTPS taşıması [transport.cpp](src/configs/transport.cpp), Worker davranışı [worker.js](config-service/worker.js), veri şeması [schema.sql](config-service/schema.sql) içindedir.
 
 ## Tam klasör ve dosya ağacı
 
-951 mevcut proje dosyası; üçüncü taraf `include/` içerikleri dahildir. `.git/`, önbellekler ve üretilmiş yerel derleme çıktıları bu kaynak haritasına dahil değildir. Satır sonundaki notlar klasörün veya ana dosyanın görevini belirtir. Yeni dosya eklendiğinde bu envanter de güncellenmelidir.
+949 mevcut proje dosyası; üçüncü taraf `include/` içerikleri dahildir. `.git/`, önbellekler ve üretilmiş yerel derleme çıktıları bu kaynak haritasına dahil değildir. Satır sonundaki notlar klasörün veya ana dosyanın görevini belirtir. Yeni dosya eklendiğinde bu envanter de güncellenmelidir.
 
 ```text
 ./
@@ -78,7 +90,6 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   │       └── hybrid/
 │   │   │           ├── ClientTickRelay.class
 │   │   │           ├── ClientTickTransformer.class
-│   │   │           ├── ConfigManager.class
 │   │   │           ├── GameBridge.class
 │   │   │           ├── InventoryBridge.class
 │   │   │           ├── ItemBridge.class
@@ -87,7 +98,6 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   │           ├── ManagerBridge.class
 │   │   │           ├── ModuleCatalog$Definition.class
 │   │   │           ├── ModuleCatalog$Field.class
-│   │   │           ├── ModuleCatalog.class
 │   │   │           ├── ModuleManager$Result.class
 │   │   │           ├── ModuleManager$Snapshot.class
 │   │   │           ├── ModuleManager$State.class
@@ -95,7 +105,6 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   │           ├── UtilityBridge.class
 │   │   │           └── WorldBridge.class
 │   │   ├── catalog_values.hpp  # Java kataloğundan üretilen native varsayılan ve sınır değerleri
-│   │   ├── ManagerCore.bin  # Ortak parent classloader'a yüklenen manager sınıf paketi
 │   │   └── module_manager_catalog.inc  # Java modül sırasından üretilen native factory tablosu
 │   ├── icons/  # Menü ve Spotify ikonları
 │   │   ├── helmet.png
@@ -671,7 +680,7 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   ├── ItemBridge.java  # Fast EXP
 │   │   ├── Json.java  # Sınırlı, strict UTF-8 JSON codec
 │   │   ├── ManagerBridge.java  # Ortak classloader oturumu ve UTF-8 manager protokolü
-│   │   ├── ModuleCatalog.java  # 36 modülün tek kimlik, kategori, varsayılan ve ayar şeması
+│   │   ├── ModuleCatalog.java  # 35 modülün tek kimlik, kategori, varsayılan ve ayar şeması
 │   │   ├── ModuleManager.java  # Enabled/keybind/lifecycle otoritesi ve immutable snapshot yayını
 │   │   ├── SkyBridge.java  # Sky render entegrasyonu
 │   │   ├── SkyFogBridge.java  # Sis rengi aktarımı
@@ -723,17 +732,18 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   │   │   └── shield_breaker_settings.hpp
 │   │   │   ├── aim_assist.cpp
 │   │   │   ├── aim_assist.hpp
+│   │   │   ├── aim_regions.hpp  # Önizleme ile ortak 60 bölge ve hitbox-içi geometri
 │   │   │   ├── anti_bot.cpp
 │   │   │   ├── anti_bot.hpp
 │   │   │   ├── anti_bot_engine.hpp
 │   │   │   ├── auto_totem.cpp
 │   │   │   ├── auto_totem.hpp
 │   │   │   ├── auto_totem_legit.cpp
-│   │   │   ├── blatant_aim_config.hpp
-│   │   │   ├── blatant_aim_engine.cpp
-│   │   │   ├── blatant_aim_engine.hpp
-│   │   │   ├── blatant_click_aim_assist.cpp
-│   │   │   ├── blatant_click_aim_assist.hpp
+│   │   │   ├── click_aim_config.hpp
+│   │   │   ├── click_aim_engine.cpp
+│   │   │   ├── click_aim_engine.hpp
+│   │   │   ├── click_aim_assist.cpp
+│   │   │   ├── click_aim_assist.hpp
 │   │   │   ├── jump_reset.cpp
 │   │   │   ├── jump_reset.hpp
 │   │   │   ├── jump_reset_config.hpp
@@ -741,8 +751,6 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   │   ├── legit_aim_engine.cpp
 │   │   │   ├── legit_aim_engine.hpp
 │   │   │   ├── legit_aim_math.hpp
-│   │   │   ├── legit_click_aim_assist.cpp
-│   │   │   ├── legit_click_aim_assist.hpp
 │   │   │   ├── shield_breaker.cpp
 │   │   │   ├── shield_breaker.hpp
 │   │   │   ├── trigger_adapter.cpp
@@ -977,6 +985,8 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   │   ├── menu_background.hpp
 │   │   ├── module_categories.hpp
 │   │   ├── settings_renderer.hpp
+│   │   ├── aim_region_picker.hpp  # Skin üzerinde en fazla 10/60 bölge seçimi
+│   │   ├── player_model_preview.hpp  # Player ESP ve Aim Regions ortak skin çizimi
 │   │   ├── themes_page.cpp
 │   │   └── themes_page.hpp
 │   ├── utils/  # Sürüm tespiti ve küçük ortak yardımcılar
@@ -1054,7 +1064,7 @@ Java testleri JDK 17+ ve C++20 derleyicisi ister. `Test-ModuleManagers.py`, kayn
 │   ├── jump_reset_config_test.cpp
 │   ├── jvm_lifecycle_test.cpp
 │   ├── key_codes_test.cpp
-│   ├── ManagerCoreTest.java  # 36 modül, dört hedef, config/lifecycle ve yarış testleri
+│   ├── ManagerCoreTest.java  # 35 modül, dört hedef, config/lifecycle ve yarış testleri
 │   ├── menu_background_renderer_test.cpp
 │   ├── minecraft261_sdk_test.cpp
 │   ├── minecraft_bindings_dump.cpp

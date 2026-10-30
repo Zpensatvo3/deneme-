@@ -30,18 +30,11 @@
       "panel": "src/modules/combat/anti_bot.cpp"
     },
     {
-      "id": "legit_click_aim_assist",
-      "owner": "src/modules/combat/legit_click_aim_assist.hpp",
-      "model": "src/modules/combat/legit_aim_config.hpp",
+      "id": "click_aim_assist",
+      "owner": "src/modules/combat/click_aim_assist.hpp",
+      "model": "src/modules/combat/click_aim_config.hpp",
       "ownership": "java_manager_view",
-      "panel": "src/modules/combat/legit_aim_engine.cpp"
-    },
-    {
-      "id": "blatant_click_aim_assist",
-      "owner": "src/modules/combat/blatant_click_aim_assist.hpp",
-      "model": "src/modules/combat/blatant_aim_config.hpp",
-      "ownership": "java_manager_view",
-      "panel": "src/modules/combat/blatant_aim_engine.cpp"
+      "panel": "src/modules/combat/click_aim_engine.cpp"
     },
     {
       "id": "aim_assist",

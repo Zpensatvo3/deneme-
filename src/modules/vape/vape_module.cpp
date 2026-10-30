@@ -201,7 +201,7 @@ const char* modules::vape_module::conflict() const
 {
     using vape_bridge::active;
     if (kind == vape_kind::aim) {
-        if (active("aim_assist") || active("legit_click_aim_assist") || active("blatant_click_aim_assist"))
+        if (active("aim_assist") || active("click_aim_assist"))
             return "Pause: Wolf Aim Assist is enabled";
     }
     return nullptr;

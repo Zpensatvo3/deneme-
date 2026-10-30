@@ -21,6 +21,7 @@ namespace gui::settings
             {
             case control::color: gui::option_color(title, candidate.*d.float_array); break;
             case control::string_list: break; // Custom pickers own list selection UI.
+            case control::integer_list: break;
             case control::real_pair:
             {
                 auto& raw = candidate.*d.float_pair;

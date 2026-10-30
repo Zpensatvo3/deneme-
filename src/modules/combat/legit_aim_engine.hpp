@@ -20,7 +20,6 @@ namespace legit_aim_engine
 		maps::Entity locked_target{ nullptr, true };
 		maps::Entity challenger{ nullptr, true };
 		std::chrono::steady_clock::time_point last_update{};
-		std::chrono::steady_clock::time_point last_click{};
 		std::chrono::steady_clock::time_point next_scan{};
 		std::chrono::steady_clock::time_point challenger_since{};
 		std::chrono::steady_clock::time_point manual_override_until{};
@@ -33,7 +32,7 @@ namespace legit_aim_engine
 		bool active = false;
 	};
 
-	void run(const config& settings, runtime& state, bool enabled, bool require_left_click = true);
+	void run(const config& settings, runtime& state, bool enabled);
 	void request_reset(runtime& state);
 	void reset(runtime& state);
 	void render_options(config& settings, const char* id_suffix);

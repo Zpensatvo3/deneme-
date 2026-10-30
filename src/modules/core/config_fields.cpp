@@ -112,6 +112,7 @@ namespace
         void field(const char* name, std::string& value) override { prefix(name); output += '"' + escape_json(value) + '"'; }
         void field(const char* name, int* values, std::size_t count) override { array(name, values, count); }
         void field(const char* name, float* values, std::size_t count) override { array(name, values, count); }
+        void field(const char* name, std::vector<int>& values) override { array(name, values.data(), values.size()); }
         void field(const char* name, std::vector<std::string>& values) override
         {
             prefix(name); output.push_back('[');
@@ -208,6 +209,20 @@ namespace
         {
             const auto raw = raw_field(name); if (!raw) return;
             if (!parse_number_array(*raw, values, count, parse_decimal<float>, apply || staged)) reject_field(name);
+        }
+        void field(const char* name, std::vector<int>& values) override
+        {
+            const auto raw = raw_field(name); if (!raw) return;
+            const auto document = modules::config_json::parse(*raw);
+            if (!document || document->type != modules::config_json::kind::array || document->items.size() > 256)
+            { reject_field(name); return; }
+            std::vector<int> parsed;
+            for (const auto& item : document->items) {
+                const auto integer = item.integer();
+                if (!integer || *integer < -1000000 || *integer > 1000000) { reject_field(name); return; }
+                parsed.push_back(*integer);
+            }
+            if (apply || staged) values = std::move(parsed);
         }
         void field(const char* name, std::vector<std::string>& values) override
         {

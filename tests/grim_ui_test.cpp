@@ -185,7 +185,7 @@ int main(int argc, char** argv)
     ::preferences.reduce_motion = true;
     gui::draw = true;
     std::vector<std::unique_ptr<fixture_module>> owned;
-    for (const char* name : {"legit click aim assist", "blatant click aim assist", "aim assist", "triggerbot",
+    for (const char* name : {"click aim assist", "aim assist", "triggerbot",
         "jump reset", "shield breaker"}) {
         owned.push_back(std::make_unique<fixture_module>(name)); entries.push_back(owned.back().get());
     }
@@ -202,8 +202,8 @@ int main(int argc, char** argv)
     const auto saved_bindings = modules::export_keybind_config();
     std::string import_message;
     for (const char* invalid : {
-        R"({"modules":[{"id":"legit_click_aim_assist","keybind":65},{"id":"triggerbot","keybind":256}]})",
-        R"({"modules":[{"id":"legit_click_aim_assist","keybind":65},{"id":"legit_click_aim_assist","keybind":66}]})",
+        R"({"modules":[{"id":"click_aim_assist","keybind":65},{"id":"triggerbot","keybind":256}]})",
+        R"({"modules":[{"id":"click_aim_assist","keybind":65},{"id":"click_aim_assist","keybind":66}]})",
         R"({"modules":[{"id":"triggerbot","keybind":1.5}]})", R"({"modules":[null]})"}) {
         assert(!modules::apply_keybind_config(invalid,import_message));
         assert(modules::export_keybind_config() == saved_bindings);
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
     // Invalid existing profiles must neither partially apply nor be silently
     // overwritten on a frame with no user edits.
     const auto corrupt = profile_path.parent_path() / "corrupt.json";
-    const std::string broken = R"({"modules":[{"id":"legit_click_aim_assist","keybind":66},{"id":"triggerbot","keybind":256}]})";
+    const std::string broken = R"({"modules":[{"id":"click_aim_assist","keybind":66},{"id":"triggerbot","keybind":256}]})";
     { std::ofstream file(corrupt); file << broken; }
     const auto before_corrupt = modules::export_keybind_config();
     assert(!configs::keybind_profile::initialize(corrupt));

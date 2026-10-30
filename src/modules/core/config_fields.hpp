@@ -27,6 +27,7 @@ namespace modules
         virtual void field(const char* name, int* values, std::size_t count) = 0;
         virtual void field(const char* name, float* values, std::size_t count) = 0;
         virtual void field(const char* name, std::vector<std::string>& values) = 0;
+        virtual void field(const char* name, std::vector<int>& values) = 0;
         virtual void enum_value(const char* name, int& value) { field(name, value); }
 
         template <std::size_t Count>

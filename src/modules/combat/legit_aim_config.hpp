@@ -9,9 +9,9 @@ namespace legit_aim_engine
     enum class aim_point { head = 0, upper_body = 1, adaptive = 4 };
     struct config
     {
-        float strength = modules::catalog::legit_click_aim_assist_strength_default, fov = modules::catalog::legit_click_aim_assist_fov_default, max_distance = modules::catalog::legit_click_aim_assist_max_distance_default;
-        aim_point point = static_cast<aim_point>(modules::catalog::legit_click_aim_assist_aim_point_default);
-        bool weapon_only = modules::catalog::legit_click_aim_assist_weapon_only_default;
+        float strength = modules::catalog::aim_assist_strength_default, fov = modules::catalog::aim_assist_fov_default, max_distance = modules::catalog::aim_assist_max_distance_default;
+        aim_point point = static_cast<aim_point>(modules::catalog::aim_assist_aim_point_default);
+        bool weapon_only = modules::catalog::aim_assist_weapon_only_default;
     };
     inline std::span<const modules::settings::descriptor<config>> schema()
     {
@@ -20,9 +20,9 @@ namespace legit_aim_engine
         static constexpr label points[]{{"Adaptive"},{"Upper Body"},{"Head"}};
         static constexpr int values[]{4,1,0};
         static const d fields[]{
-            d::number("strength", {"Assist Strength"}, &config::strength, modules::catalog::legit_click_aim_assist_strength_minimum, modules::catalog::legit_click_aim_assist_strength_maximum, "%.0f%%"),
-            d::number("fov", {"FOV"}, &config::fov, modules::catalog::legit_click_aim_assist_fov_minimum, modules::catalog::legit_click_aim_assist_fov_maximum, "%.0f deg"),
-            d::number("max_distance", {"Range"}, &config::max_distance, modules::catalog::legit_click_aim_assist_max_distance_minimum, modules::catalog::legit_click_aim_assist_max_distance_maximum, "%.1f blocks"),
+            d::number("strength", {"Assist Strength"}, &config::strength, modules::catalog::aim_assist_strength_minimum, modules::catalog::aim_assist_strength_maximum, "%.0f%%"),
+            d::number("fov", {"FOV"}, &config::fov, modules::catalog::aim_assist_fov_minimum, modules::catalog::aim_assist_fov_maximum, "%.0f deg"),
+            d::number("max_distance", {"Range"}, &config::max_distance, modules::catalog::aim_assist_max_distance_minimum, modules::catalog::aim_assist_max_distance_maximum, "%.1f blocks"),
             d::enumeration<&config::point>("aim_point", {"Aim Point"}, points, values),
             d::toggle("weapon_only", {"Weapon Only"}, &config::weapon_only)
         };

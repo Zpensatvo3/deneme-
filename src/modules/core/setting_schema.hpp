@@ -20,7 +20,7 @@ namespace modules::settings
     {
         const char* english;
     };
-    enum class control { toggle, number, range, choice, integer, color, real_pair, integer_pair, string_list };
+    enum class control { toggle, number, range, choice, integer, color, real_pair, integer_pair, string_list, integer_list };
 
     // Data only: config keys, member bindings, limits and display metadata.
     template<class Config>
@@ -47,6 +47,8 @@ namespace modules::settings
         float (Config::* float_pair)[2] = nullptr;
         int (Config::* int_pair)[2] = nullptr;
         std::vector<std::string> Config::* strings = nullptr;
+        std::vector<int> Config::* integers = nullptr;
+        std::size_t maximum_items = 256;
         std::span<const int> choice_values{};
         int (*enum_read)(const Config&) = nullptr;
         void (*enum_write)(Config&, int) = nullptr;
@@ -80,6 +82,13 @@ namespace modules::settings
         {
             descriptor d; d.type = control::string_list; d.key = key; d.title = title;
             d.strings = member; d.visible = false; return d;
+        }
+        static descriptor integer_list(const char* key, label title, std::vector<int> Config::* member,
+            int minimum, int maximum, std::size_t maximum_items)
+        {
+            descriptor d; d.type = control::integer_list; d.key = key; d.title = title;
+            d.integers = member; d.integer_minimum = minimum; d.integer_maximum = maximum;
+            d.maximum_items = maximum_items; d.visible = false; return d;
         }
         template<auto Member>
         static descriptor enumeration(const char* key, label title, std::span<const label> values,
@@ -155,6 +164,14 @@ namespace modules::settings
                 }
                 if (count == 2 && values[0] > values[1]) std::swap(values[0], values[1]);
             }
+            else if (d.type == control::integer_list)
+            {
+                auto& values = candidate.*d.integers;
+                if (values.size() > d.maximum_items) return false;
+                for (int value : values) if (value < d.integer_minimum || value > d.integer_maximum) return false;
+                std::sort(values.begin(), values.end());
+                if (std::adjacent_find(values.begin(), values.end()) != values.end()) return false;
+            }
             else if (d.type == control::integer_pair)
             {
                 auto& values = candidate.*d.int_pair;
@@ -203,6 +220,7 @@ namespace modules::settings
             case control::real_pair: visitor.field(d.key, candidate.*d.float_pair); break;
             case control::integer_pair: visitor.field(d.key, candidate.*d.int_pair); break;
             case control::string_list: visitor.field(d.key, candidate.*d.strings); break;
+            case control::integer_list: visitor.field(d.key, candidate.*d.integers); break;
             case control::integer: visitor.field(d.key, candidate.*d.integer_value); break;
             case control::toggle: visitor.field(d.key, candidate.*d.boolean); break;
             case control::number: visitor.field(d.key, candidate.*d.scalar); break;

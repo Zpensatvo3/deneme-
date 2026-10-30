@@ -650,6 +650,8 @@
     <ClInclude Include="src\modules\visual\settings\*.hpp" />
     <ClInclude Include="src\modules\render\settings\*.hpp" />
     <ClInclude Include="src\ui\settings_renderer.hpp" />
+    <ClInclude Include="src\ui\player_model_preview.hpp" />
+    <ClInclude Include="src\ui\aim_region_picker.hpp" />
     <ClInclude Include="src\ui\dock_layout.hpp" />
     <ClInclude Include="src\ui\module_categories.hpp" />
     <ClInclude Include="src\ui\keyboard_layout.hpp" />

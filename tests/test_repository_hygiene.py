@@ -12,11 +12,11 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from repository_hygiene import validate_repository, validate_markdown
 validate_project_entries = runpy.run_path(str(ROOT / "scripts/Test-Infrastructure.py"))["validate_project_entries"]
 
-# Captured before source/class renaming. Intentionally independent of the catalog
-# and settings manifest: removing an entry from both must still fail this test.
+# Expected module set after the approved removal and rename. Independent of the
+# catalog and settings manifest, so accidental removals from both still fail.
 BASELINE_IDS = """
 friends_manager click_gui panic anti_bot
-legit_click_aim_assist blatant_click_aim_assist aim_assist triggerbot
+click_aim_assist aim_assist triggerbot
 watermark arraylist
 chams china_hat wings cape sky trails hit_particles jump_circles player_esp item_esp storage_esp block_esp radar spotify_hud
 full_bright jump_reset shield_breaker auto_totem pearl_macro
@@ -83,10 +83,10 @@ class RepositoryHygieneTest(unittest.TestCase):
         self.write("README.md", "[bad](docs/guide.md#missing) [gone](gone.md)")
         self.assertEqual(len(validate_markdown(path)), 2)
 
-    def test_all_36_module_ids_and_order_are_preserved(self):
+    def test_all_35_module_ids_and_order_are_preserved(self):
         catalog = (ROOT / "src/bridge/ModuleCatalog.java").read_text(encoding="utf-8")
         ids = re.findall(r'^\s*m\("([a-z0-9_]+)"', catalog, re.M)
-        self.assertEqual(len(BASELINE_IDS), 36)
+        self.assertEqual(len(BASELINE_IDS), 35)
         self.assertEqual(ids, BASELINE_IDS)
         generated = (ROOT / "assets/hybrid/module_manager_catalog.inc").read_text(encoding="utf-8")
         self.assertEqual(re.findall(r'\{\s*"([a-z0-9_]+)"\s*,\s*&', generated), BASELINE_IDS)

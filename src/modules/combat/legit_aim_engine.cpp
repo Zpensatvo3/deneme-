@@ -4,7 +4,6 @@
 #include "../../platform/jni/jni_context.hpp"
 #include "../../platform/adapter/game_adapter.hpp"
 #include "../../services/game/client_context.hpp"
-#include "../../services/input/input_service.hpp"
 #include "../../friends/friends.hpp"
 #include "../../gui/gui.hpp"
 #include "../../gui/widgets.hpp"
@@ -143,13 +142,13 @@ void legit_aim_engine::reset(runtime& state)
 {
     state.locked_target.clear_ref(); clear_challenger(state);
     state.world.clear_ref(); state.player.clear_ref(); state.config_valid = false;
-    state.last_update = {}; state.last_click = {}; state.next_scan = {};
+    state.last_update = {}; state.next_scan = {};
     state.manual_override_until = {}; state.filtered_point_valid = false;
     state.expected_view_valid = false; state.assist_blend = 0; state.active = false;
     geometry::reset_motion(state.motion);
 }
 
-void legit_aim_engine::run(const config& requested, runtime& state, bool enabled, bool require_left_click)
+void legit_aim_engine::run(const config& requested, runtime& state, bool enabled)
 {
     if (!platform::jni_context::bind_current_thread()) { request_reset(state); return; }
     const auto generation = state.reset_generation.load(std::memory_order_acquire);
@@ -182,21 +181,6 @@ void legit_aim_engine::run(const config& requested, runtime& state, bool enabled
         }
 
         const auto now = steady_clock::now();
-        const bool activated = !require_left_click ||
-            services::input::physical_button_down(services::input::mouse_button::left);
-        if (!activated) {
-            if (state.last_click.time_since_epoch().count() == 0 ||
-                now - state.last_click > std::chrono::milliseconds(200)) { reset(state); return; }
-            // Keep the target briefly for reacquisition, but never move the
-            // camera after the user releases physical left click.
-            const float elapsed = state.last_update.time_since_epoch().count() == 0 ? 0.f :
-                std::chrono::duration<float>(now - state.last_update).count();
-            state.active = false; state.expected_view_valid = false;
-            geometry::reset_motion(state.motion);
-            state.assist_blend = std::max(0.f, state.assist_blend - std::clamp(elapsed, 0.f, .05f) / .08f);
-            state.last_update = now; return;
-        }
-        state.last_click = now;
         float delta_time = state.last_update.time_since_epoch().count() == 0 ? 0.f :
             std::chrono::duration<float>(now - state.last_update).count();
         state.last_update = now;

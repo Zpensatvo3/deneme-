@@ -39,7 +39,9 @@ public final class ConfigManager {
                 Map<String, ModuleManager.State> pending = new LinkedHashMap<>(); Set<String> seen = new HashSet<>();
                 Set<String> resets = new HashSet<>(); Map<String, Object> normal = null, legit = null;
                 for (Object raw : entries) {
-                    var entry = Json.object(raw); String id = Json.string(entry.get("id"));
+                    var entry = Json.object(raw); String storedId = Json.string(entry.get("id"));
+                    // Keep existing public configs and local bindings after the module rename.
+                    String id = storedId.equals("blatant_click_aim_assist") ? "click_aim_assist" : storedId;
                     if (id.isEmpty() || id.getBytes(StandardCharsets.UTF_8).length > 128 || !seen.add(id))
                         throw Json.error("Invalid or duplicate module ID: " + id);
                     int binding = Json.integer(entry.get("keybind")); ModuleManager.validateKeybind(binding);
@@ -114,11 +116,26 @@ public final class ConfigManager {
         }
         // Revisit in schema order, so dependent lower bounds observe normalized earlier fields.
         for (var field : definition.fields()) candidate.put(field.key(), normalizeField(field, candidate.get(field.key()), candidate));
+        if (id.equals("click_aim_assist") && Json.array(candidate.get("aim_regions")).size() > 10)
+            throw Json.error("Aim Regions: select at most 10 of the 60 regions");
         return Collections.unmodifiableMap(candidate);
     }
     private static Object normalizeField(ModuleCatalog.Field field, Object value, Map<String, Object> context) {
         int kind = field.kind();
         if (kind == 0) return Json.bool(value);
+        if (kind == 9) {
+            List<Object> list = Json.array(value);
+            if (list.size() > 256) throw Json.error(field.key() + ": list exceeds 256 entries");
+            List<Integer> values = new ArrayList<>(); Set<Integer> seen = new HashSet<>();
+            for (Object item : list) {
+                int selected = Json.integer(item);
+                if (selected < field.minimum() || selected > field.maximum() || !seen.add(selected))
+                    throw Json.error(field.key() + ": invalid or duplicate region ID");
+                values.add(selected);
+            }
+            Collections.sort(values);
+            return values.stream().map(selected -> BigDecimal.valueOf(selected.longValue())).toList();
+        }
         if (kind == 8) {
             List<Object> list = Json.array(value);
             if (list.size() > 256) throw Json.error(field.key() + ": list exceeds 256 entries");
@@ -151,9 +168,13 @@ public final class ConfigManager {
         return integer ? BigDecimal.valueOf((int)clamped) : new BigDecimal(Float.toString((float)clamped));
     }
     private static void migrate(String id, Map<String, Object> previous, Map<String, Object> fields) {
-        if (id.equals("blatant_click_aim_assist") && fields.containsKey("aim_point")) {
+        if (id.equals("click_aim_assist") && fields.containsKey("aim_point") && !fields.containsKey("aim_regions")) {
             int point = Json.integer(fields.get("aim_point"));
-            if (point == 0 || point == 2) fields.put("aim_point", BigDecimal.valueOf(point == 0 ? 1 : 4));
+            if (point < 0 || point > 4) throw Json.error("Invalid legacy aim point");
+            List<BigDecimal> regions = new ArrayList<>();
+            for (int region = point == 0 ? 0 : 10; region < (point == 0 ? 10 : 20); ++region)
+                regions.add(BigDecimal.valueOf(region));
+            fields.put("aim_regions", regions);
         }
         if (!id.equals("triggerbot")) return;
         pair(fields, previous, "cooldown", "min_cooldown", "max_cooldown");

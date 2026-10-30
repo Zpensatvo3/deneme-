@@ -20,7 +20,7 @@
 #include "../src/modules/visual/settings/wings_settings.hpp"
 #include "../src/modules/render/settings/watermark_settings.hpp"
 #include "../src/modules/render/settings/arraylist_settings.hpp"
-#include "../src/modules/combat/blatant_aim_config.hpp"
+#include "../src/modules/combat/click_aim_config.hpp"
 #include "../src/modules/combat/legit_aim_config.hpp"
 #include <limits>
 #include <cassert>
@@ -71,12 +71,12 @@ void check_contract(std::initializer_list<const char*> expected)
     assert(keys == std::set<std::string>(expected.begin(), expected.end()));
 }
 
-class blatant_fixture final : public modules::config_fixture
+class click_aim_fixture final : public modules::config_fixture
 {
 public:
-    blatant_fixture() : config_fixture("blatant_fixture") {}
-    blatant_aim_engine::config settings;
-    void visit_config(modules::config_visitor& v) override { blatant_aim_engine::visit_config(v, settings); }
+    click_aim_fixture() : config_fixture("click_aim_fixture") {}
+    click_aim_engine::config settings;
+    void visit_config(modules::config_visitor& v) override { click_aim_engine::visit_config(v, settings); }
 };
 
 int main()
@@ -209,15 +209,11 @@ int main()
     assert(radar_overlay.apply_config_settings(R"({"position_x":2100,"position_y":1300})"));
     assert(radar_overlay.settings.read().position_x == 2100 && radar_overlay.settings.read().position_y == 1300);
 
-    blatant_fixture aim;
-    for (int value : {1,3,4}) {
-        assert(aim.apply_config_settings("{\"aim_point\":" + std::to_string(value) + "}"));
-        assert(static_cast<int>(aim.settings.point) == value);
-    }
-    assert(aim.apply_config_settings(R"({"aim_point":0})") && aim.settings.point == blatant_aim_engine::aim_point::body);
-    assert(aim.apply_config_settings(R"({"aim_point":2})") && aim.settings.point == blatant_aim_engine::aim_point::adaptive);
+    click_aim_fixture aim;
+    assert(aim.apply_config_settings(R"({"aim_regions":[0,7,15,59]})"));
+    assert(aim.settings.regions == std::vector<int>({0,7,15,59}));
     const auto aim_saved = aim.export_config_settings();
-    assert(!aim.apply_config_settings(R"({"aim_point":9,"fov":15})"));
+    assert(!aim.apply_config_settings(R"({"aim_regions":[60],"fov":45})"));
     assert(aim.export_config_settings() == aim_saved);
     auto color = chams{};
     color.visible_color[2] = std::numeric_limits<float>::infinity();
