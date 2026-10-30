@@ -295,8 +295,7 @@ void modules::chams::render_overlay()
         services::game::client_context context;
         if (!services::game::capture_client_context(context,true,false)) { state->clear(); return; }
         if (context.screen) return;
-        settings_type config;
-        { std::lock_guard lock(settings_mutex); config = settings; }
+        const auto config = settings.read();
         if (!std::isfinite(config.opacity) ||
             !std::isfinite(config.glow_strength) || !std::isfinite(config.glow_radius)) return;
         const float opacity = std::clamp(config.opacity,0.f,1.f);
@@ -410,11 +409,5 @@ void modules::chams::render_overlay()
 
 void modules::chams::render_options()
 {
-    std::lock_guard lock(settings_mutex);
     gui::settings::render(settings, settings_type::schema());
-}
-void modules::chams::visit_config(config_visitor& visitor)
-{
-    std::lock_guard lock(settings_mutex);
-    if (modules::settings::visit(visitor, settings, settings_type::schema())) reset_requested.store(true);
 }

@@ -4,10 +4,10 @@
 #include "../src/modules/combat/legit_aim_config.hpp"
 #include <cassert>
 
-class aim_fixture final : public modules::module
+class aim_fixture final : public modules::config_fixture
 {
 public:
-    aim_fixture() : module("aim_assist") {}
+    aim_fixture() : config_fixture("aim_assist") {}
     legit_aim_engine::config settings;
     int resets = 0;
     void visit_config(modules::config_visitor& v) override

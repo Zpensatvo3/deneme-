@@ -36,8 +36,8 @@ namespace
     }
     snapshot capture()
     {
-        snapshot result{{ {gui::hud_pos_x, gui::hud_pos_y, gui::hud_scale},
-            {gui::arraylist_pos_x, gui::arraylist_pos_y, gui::arraylist_scale}, {22, 60, 1.2f} }};
+        snapshot result{{ {gui::watermark_settings.read().position_x, gui::watermark_settings.read().position_y, gui::watermark_settings.read().scale},
+            {gui::arraylist_settings.read().position_x, gui::arraylist_settings.read().position_y, gui::arraylist_settings.read().scale}, {22, 60, 1.2f} }};
         if (auto* spotify = spotify_module()) { result[2].x = spotify->get_pos_x(); result[2].y = spotify->get_pos_y(); }
         for (int index = 0; index < overlay_count; ++index)
             if (auto* module = modules::find_module_by_id(ids[index])) result[index].visible = module->enabled;
@@ -45,8 +45,8 @@ namespace
     }
     void apply(const snapshot& value)
     {
-        gui::hud_pos_x = value[0].x; gui::hud_pos_y = value[0].y; gui::hud_scale = value[0].scale;
-        gui::arraylist_pos_x = value[1].x; gui::arraylist_pos_y = value[1].y; gui::arraylist_scale = value[1].scale;
+        gui::watermark_settings.update([&](auto& c) { c.position_x = value[0].x; c.position_y = value[0].y; c.scale = value[0].scale; return true; });
+        gui::arraylist_settings.update([&](auto& c) { c.position_x = value[1].x; c.position_y = value[1].y; c.scale = value[1].scale; return true; });
         if (auto* spotify = spotify_module()) { spotify->set_pos_x(value[2].x); spotify->set_pos_y(value[2].y); }
         for (int index = 0; index < overlay_count; ++index)
             if (auto* module = modules::find_module_by_id(ids[index])) module->enabled = value[index].visible;
@@ -88,8 +88,8 @@ namespace
     void set_position(int index, layout::point position, ImVec2 size, ImVec2 canvas)
     {
         position = layout::clamp(position, {size.x, size.y}, {canvas.x, canvas.y});
-        if (index == 0) { gui::hud_pos_x = position.x; gui::hud_pos_y = position.y; }
-        if (index == 1) { gui::arraylist_pos_x = std::max(8.f, canvas.x - position.x - size.x); gui::arraylist_pos_y = position.y; }
+        if (index == 0) gui::watermark_settings.update([&](auto& c) { c.position_x = position.x; c.position_y = position.y; return true; });
+        if (index == 1) gui::arraylist_settings.update([&](auto& c) { c.position_x = std::max(8.f, canvas.x - position.x - size.x); c.position_y = position.y; return true; });
         if (index == 2) if (auto* spotify = spotify_module()) { spotify->set_pos_x(position.x); spotify->set_pos_y(position.y); }
         save();
     }
@@ -237,13 +237,13 @@ void gui::hud_editor::render(const ImGuiViewport* viewport)
             if (index == 0)
             {
                 item.size = gui::watermark_draw::size();
-                item.position = {gui::hud_pos_x, gui::hud_pos_y};
+                item.position = {gui::watermark_settings.read().position_x, gui::watermark_settings.read().position_y};
                 gui::watermark_draw::draw(draw, item.position.x, item.position.y);
             }
             if (index == 1)
             {
                 modules::arraylist::overlay_bounds bounds{};
-                modules::arraylist::draw_overlay(draw, gui::arraylist_pos_x, gui::arraylist_pos_y, true, &bounds);
+                modules::arraylist::draw_overlay(draw, gui::arraylist_settings.read().position_x, gui::arraylist_settings.read().position_y, true, &bounds);
                 item.position = {bounds.minimum_x, bounds.minimum_y}; item.size = {bounds.width(), bounds.height()};
             }
             if (index == 2) if (auto* spotify = spotify_module())

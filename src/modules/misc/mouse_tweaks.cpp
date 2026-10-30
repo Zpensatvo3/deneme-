@@ -223,9 +223,7 @@ void modules::mouse_tweaks::render_overlay()
 {
     if constexpr (mc::target.build_id != 12111) return;
     if (reset_requested_.exchange(false, std::memory_order_acq_rel)) on_render_shutdown();
-    const auto settings = settings_.read();
-    services::game::inventory_bridge::tick_mouse(enabled, settings.right_click_tweak,
-        settings.left_click_with_item, settings.left_click_without_item);
+    services::game::inventory_bridge::tick_mouse();
 }
 
 void modules::mouse_tweaks::on_render_shutdown()

@@ -100,7 +100,6 @@ namespace maps
 
 		BEGIN_KLASS_DEF_EX(ClientPlayerEntity, ONESTEP_MC_NAME("net/minecraft/class_746"), AbstractClientPlayerEntity)
 		jni::field<Input, ONESTEP_MC_NAME("field_3913")> input{ *this };
-        jni::method<HitResult, ONESTEP_MC_NAME("method_76763"), jni::STATIC, Entity, jdouble, jdouble, jfloat> findCrosshairTarget{*this};
 		maps::PlayerEntity toPlayerEntity() const
     {
         return maps::PlayerEntity(this->object_instance, this->is_global());
@@ -119,7 +118,6 @@ namespace maps
         BEGIN_KLASS_DEF_EX(ClientWorld, ONESTEP_MC_NAME("net/minecraft/class_638"), World)
         jni::field<List, ONESTEP_MC_NAME("field_18226")> players{ *this };
     jni::method<List, ONESTEP_MC_NAME("method_18456")> getPlayers{ *this };
-    jni::field<WorldProperties, ONESTEP_MC_NAME("field_24430")> clientWorldProperties{ *this };
     jni::method<Iterable, ONESTEP_MC_NAME("method_18112")> getEntities{ *this };
     jni::method<Entity, ONESTEP_MC_NAME("method_8469"), jni::NOT_STATIC, jint> getEntityById{ *this };
     jni::method<ClientChunkManager, ONESTEP_MC_NAME("method_2935")> getChunkManager{ *this };

@@ -20,11 +20,8 @@ class mouse_tweaks : public module
         void on_render_shutdown() override;
         bool render_when_disabled() const override { return mc::target.build_id == 12111; }
 		float get_options_height() override { return 120.0f; }
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::mouse_tweaks::schema()); }
-
 	private:
 		std::atomic_bool reset_requested_{true};
-		modules::settings::store<module_settings::mouse_tweaks> settings_;
+modules::settings::store<module_settings::mouse_tweaks> settings_{"mouse_tweaks"};
 	};
 }

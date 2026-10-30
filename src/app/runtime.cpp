@@ -15,6 +15,7 @@
 #include "../services/game/item_bridge.hpp"
 #include "../services/game/inventory_bridge.hpp"
 #include "../services/game/world_bridge.hpp"
+#include "../services/game/manager_bridge.hpp"
 #include "../utils/version_manager.hpp"
 #include <Windows.h>
 #include <chrono>
@@ -60,6 +61,7 @@ namespace
             services::game::utility::shutdown();
             services::game::hybrid::shutdown();
             if (modules_started) modules::shutdown(game);
+            services::game::module_manager::shutdown();
         }
     };
 }
@@ -90,6 +92,9 @@ void app::run()
 
         cache game;
         runtime_services services{game};
+        if (!services::game::module_manager::initialize()) {
+            report_runtime_error("Java module manager could not be initialized"); return;
+        }
         // Register before enabling render callbacks: the module list stays fixed
         // until gui::shutdown has joined the render side.
         services.modules_started = true;

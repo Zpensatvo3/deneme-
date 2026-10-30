@@ -8,13 +8,14 @@
 #include "../src/modules/misc/pot_refill.hpp"
 #include <cassert>
 #include <set>
+#include "support/dto_fixture.hpp"
 
 template<class Model>
-class settings_fixture final : public modules::module
+class settings_fixture final : public modules::config_fixture
 {
 public:
-    settings_fixture() : module("utility_fixture") {}
-    modules::settings::store<Model> settings;
+    settings_fixture() : config_fixture("utility_fixture") {}
+    dto_fixture<Model> settings;
     void visit_config(modules::config_visitor& visitor) override
     {
         settings.visit(visitor, Model::schema());

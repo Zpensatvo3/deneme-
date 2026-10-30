@@ -5,15 +5,15 @@ namespace module_settings
 {
     struct watermark
     {
-        float scale = 1.f, position_x = 10.f, position_y = 10.f;
+        float scale = modules::catalog::watermark_scale_default, position_x = modules::catalog::watermark_position_x_default, position_y = modules::catalog::watermark_position_y_default;
         bool operator==(const watermark&) const = default;
         static std::span<const modules::settings::descriptor<watermark>> schema()
         {
             using d = modules::settings::descriptor<watermark>;
             static const d fields[]{
-                d::number("scale", {"Scale"}, &watermark::scale, .5f, 2.f, "%.2f"),
-                d::number("position_x", {"Position X"}, &watermark::position_x, -1000000.f, 1000000.f).hidden(),
-                d::number("position_y", {"Position Y"}, &watermark::position_y, -1000000.f, 1000000.f).hidden()
+                d::number("scale", {"Scale"}, &watermark::scale, modules::catalog::watermark_scale_minimum, modules::catalog::watermark_scale_maximum, "%.2f"),
+                d::number("position_x", {"Position X"}, &watermark::position_x, modules::catalog::watermark_position_x_minimum, modules::catalog::watermark_position_x_maximum).hidden(),
+                d::number("position_y", {"Position Y"}, &watermark::position_y, modules::catalog::watermark_position_y_minimum, modules::catalog::watermark_position_y_maximum).hidden()
             };
             return fields;
         }

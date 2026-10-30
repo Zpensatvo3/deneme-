@@ -59,7 +59,7 @@ namespace
             auto item = checked(env, env->DefineClass("net/onestep/hybrid/ItemBridge", loader,
                 static_cast<const jbyte*>(bytes), static_cast<jsize>(size)));
             auto create = checked(env, env->GetMethodID(item, "<init>", "(Ljava/lang/ClassLoader;I)V"));
-            update_method = checked(env, env->GetMethodID(item, "update", "(ZZZII)V"));
+            update_method = checked(env, env->GetMethodID(item, "update", "(ZZ)V"));
             stop_method = checked(env, env->GetMethodID(item, "stop", "()V"));
             auto instance = checked(env, env->NewObject(item, create, parent, static_cast<jint>(mc::target.build_id)));
             bridge = checked(env, env->NewGlobalRef(instance));
@@ -75,7 +75,7 @@ namespace
     }
 }
 
-void services::game::items::update(bool enabled, int min_cps, int max_cps)
+void services::game::items::update(bool enabled)
 {
     if (!platform::jni_context::bind_current_thread()) return;
     const bool allowed = permitted();
@@ -84,9 +84,7 @@ void services::game::items::update(bool enabled, int min_cps, int max_cps)
     jni::frame frame{32};
     auto env = jni::get_env();
     if (!connect(env) || failed) return;
-    env->CallVoidMethod(bridge, update_method, static_cast<jboolean>(enabled),
-        static_cast<jboolean>(allowed), static_cast<jboolean>(held),
-        static_cast<jint>(min_cps), static_cast<jint>(max_cps));
+    env->CallVoidMethod(bridge, update_method, static_cast<jboolean>(allowed), static_cast<jboolean>(held));
     if (env->ExceptionCheck()) fail();
 }
 

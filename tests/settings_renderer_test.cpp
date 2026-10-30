@@ -68,7 +68,7 @@ int main()
     drawn.clear();
     gui::settings::render(exp, module_settings::fast_exp::schema());
     assert(!drawn.contains("cps") && int_low == 5 && int_high == 40);
-    modules::settings::store<module_settings::fast_exp> store;
+    modules::settings::store<module_settings::fast_exp> store{"fast_exp"};
     assert(gui::settings::edit(store, module_settings::fast_exp::schema(), [](auto& c) { c.min_cps = 48; }));
     assert(store.read().min_cps == 48);
     assert(gui::settings::edit(store, module_settings::fast_exp::schema(), [](auto& c) { c.min_cps = 999; }));

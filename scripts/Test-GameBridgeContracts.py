@@ -28,6 +28,7 @@ with tempfile.TemporaryDirectory(prefix="onestep-bridge-contracts-") as director
     native_dir.mkdir(parents=True)
     for source, _ in bridges.values():
         shutil.copy2(ROOT / "src/services/game" / source, native_dir / source)
+    shutil.copy2(ROOT / "src/services/game/manager_bridge.cpp", native_dir / "manager_bridge.cpp")
     native_world = native_dir / "world_bridge.cpp"
     text = native_world.read_text(encoding="utf-8")
     old = '(ILjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IJ)J'

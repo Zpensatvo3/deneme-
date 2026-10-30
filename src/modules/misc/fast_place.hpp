@@ -15,9 +15,7 @@ class fast_place : public module
 		void render_overlay() override;
 		void render_options() override;
 		float get_options_height() override { return 155.0f; }
-		void visit_config(config_visitor& v) override { settings_.visit(v, module_settings::fast_place::schema()); }
-
 	private:
-		modules::settings::store<module_settings::fast_place> settings_;
+modules::settings::store<module_settings::fast_place> settings_{"fast_place"};
 	};
 }

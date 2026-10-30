@@ -18,6 +18,42 @@ BRIDGES = {
 }
 
 
+def manager_bundle(data):
+    if len(data) < 8 or data[:4] != b"WMC1":
+        raise ValueError("Invalid ManagerCore bundle header")
+    position = 4
+
+    def number():
+        nonlocal position
+        if position + 4 > len(data):
+            raise ValueError("Truncated ManagerCore bundle")
+        result = struct.unpack_from(">I", data, position)[0]
+        position += 4
+        return result
+
+    count = number()
+    if not 5 <= count <= 128:
+        raise ValueError("Invalid ManagerCore class count")
+    classes = {}
+    for _ in range(count):
+        length = number()
+        if not 1 <= length <= 256 or position + length > len(data):
+            raise ValueError("Invalid ManagerCore class name")
+        name = data[position:position + length].decode("ascii")
+        position += length
+        size = number()
+        if not 1 <= size <= 1024 * 1024 or position + size > len(data) or name in classes:
+            raise ValueError("Invalid ManagerCore class entry")
+        blob = data[position:position + size]
+        position += size
+        if read_class(blob).name != name:
+            raise ValueError("ManagerCore class identity mismatch")
+        classes[name] = blob
+    if position != len(data):
+        raise ValueError("Trailing ManagerCore bundle data")
+    return classes
+
+
 def pe_resource(data, resource_id):
     """Read RCDATA without loading/executing the DLL."""
     def u16(offset): return struct.unpack_from("<H", data, offset)[0]
@@ -76,6 +112,9 @@ def validate(classes, dll=None, root=ROOT):
             actual = pe_resource(image, ids[identifier])
             if actual != expected: errors.append(f"{dll.name}: stale embedded {path.name}")
             if path.stem in blobs: blobs[path.stem] = actual
+        expected_bundle = (classes / "ManagerCore.bin").read_bytes()
+        if pe_resource(image, ids["IDR_MANAGER_CORE"]) != expected_bundle:
+            errors.append(f"{dll.name}: stale embedded ManagerCore.bin")
     for name, (source, variable) in BRIDGES.items():
         info = read_class(blobs[name])
         if info.name != "net/onestep/hybrid/" + name:
@@ -99,6 +138,23 @@ def validate(classes, dll=None, root=ROOT):
             errors.append(f"{name}: RegisterNatives requires missing native {method}{descriptor}")
         for method, descriptor in sorted(natives - registered):
             errors.append(f"{name}: native {method}{descriptor} has no registration")
+    try:
+        packed = manager_bundle((classes / "ManagerCore.bin").read_bytes())
+        for name, blob in packed.items():
+            if (classes / (name + ".class")).read_bytes() != blob:
+                errors.append(f"ManagerCore: stale bundled {name}")
+        info = read_class(packed["net/onestep/hybrid/ManagerBridge"])
+        source = (root / "src/services/game/manager_bridge.cpp").read_text(encoding="utf-8")
+        contracts = re.findall(r'GetStaticMethodID\(\s*core\s*,\s*"([^"\n]+)"\s*,\s*"([^"\n]+)"\s*\)', source)
+        if len(contracts) < 4:
+            errors.append("ManagerBridge: missing start/snapshot/request/stop JNI contracts")
+        for method, descriptor in contracts:
+            checked += 1
+            flags = info.members.get(("method", method, descriptor))
+            if flags is None or not flags & 0x8:
+                errors.append(f"ManagerBridge: missing static method {method}{descriptor}")
+    except (OSError, ValueError, KeyError) as error:
+        errors.append(f"ManagerCore: {error}")
     return errors, checked
 
 

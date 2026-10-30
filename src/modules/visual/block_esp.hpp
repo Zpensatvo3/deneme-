@@ -21,11 +21,8 @@ class block_esp : public module
 		void render_options() override;
 		void on_render_shutdown() override { block_icons_.clear(); }
 		float get_options_height() override { return 500.0f; }
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::block_esp::schema()); }
-
 	private:
-        modules::settings::store<module_settings::block_esp> settings_;
+modules::settings::store<module_settings::block_esp> settings_{"block_esp"};
 		struct marker { double x, y, z; std::string key; };
 		std::size_t scan_index = 0, scan_section = 0;
         std::chrono::steady_clock::time_point next_scan{}; // Worker-owned throttle.

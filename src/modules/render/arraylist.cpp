@@ -126,13 +126,13 @@ namespace
 
 	arraylist_layout::geometry build_geometry(ImFont*)
 	{
-		const float scale = std::clamp(gui::arraylist_scale, 0.5f, 2.0f);
+		const float scale = std::clamp(gui::arraylist_settings.read().scale, 0.5f, 2.0f);
 
 		arraylist_layout::geometry metrics{};
 		metrics.font_size = 14.0f * scale;
 		metrics.padding_x = 9.0f * scale;
 		metrics.padding_y = 4.0f * scale;
-		metrics.bar_width = std::clamp(modules::arraylist::bar_width, 1.5f, 6.0f) * scale;
+		metrics.bar_width = std::clamp(gui::arraylist_settings.read().bar_width, 1.5f, 6.0f) * scale;
 		metrics.keybind_gap = 6.0f * scale;
 		metrics.chip_padding = 4.0f * scale;
 		metrics.keybind_font_size = 10.0f * scale;
@@ -285,7 +285,7 @@ bool modules::arraylist::draw_overlay(ImDrawList* draw_list, float right_margin,
 		if (entry.sample_label)
 		{
 			row.label = entry.sample_label;
-			row.keybind = modules::arraylist::show_keybinds ? entry.sample_keybind : "";
+			row.keybind = gui::arraylist_settings.read().show_keybinds ? entry.sample_keybind : "";
 			state.label = row.label;
 			state.keybind = row.keybind;
 		}
@@ -300,7 +300,7 @@ bool modules::arraylist::draw_overlay(ImDrawList* draw_list, float right_margin,
 				state.label = display_name(raw);
 			}
 
-			const std::string bind = modules::arraylist::show_keybinds
+			const std::string bind = gui::arraylist_settings.read().show_keybinds
 				? keybind_label(module->get_keybind())
 				: std::string();
 			if (bind != state.keybind) state.keybind = bind;
@@ -387,7 +387,7 @@ bool modules::arraylist::draw_overlay(ImDrawList* draw_list, float right_margin,
 	}
 
 	// One rounded staircase contour keeps the glass connected without equalizing row widths.
-	const float scale = std::clamp(gui::arraylist_scale, 0.5f, 2.0f);
+	const float scale = std::clamp(gui::arraylist_settings.read().scale, 0.5f, 2.0f);
 	float panel_visibility = 0.0f;
 	std::vector<const row_rect*> contour_rows;
 	contour_rows.reserve(rects.size());
@@ -445,7 +445,7 @@ bool modules::arraylist::draw_overlay(ImDrawList* draw_list, float right_margin,
 				u * u * from.y + 2.0f * u * t * p.y + t * t * to.y);
 		}
 	}
-	const int background_alpha = static_cast<int>(215.0f * std::clamp(bg_opacity, 0.0f, 1.0f) * panel_visibility);
+	const int background_alpha = static_cast<int>(215.0f * std::clamp(gui::arraylist_settings.read().bg_opacity, 0.0f, 1.0f) * panel_visibility);
 	const int first_vertex = draw_list->VtxBuffer.Size;
 	draw_list->AddConcavePolyFilled(contour.data(), static_cast<int>(contour.size()), IM_COL32(255, 255, 255, background_alpha));
 	for (int vertex = first_vertex; vertex < draw_list->VtxBuffer.Size; ++vertex)
@@ -466,7 +466,7 @@ bool modules::arraylist::draw_overlay(ImDrawList* draw_list, float right_margin,
 	const ImVec2 rail_max(right_edge, block_bottom - inset);
 	const ImColor accent_top = gui::get_dynamic_color(0);
 	const ImColor accent_bottom = gui::get_dynamic_color(200);
-	if (bar_glow)
+	if (gui::arraylist_settings.read().bar_glow)
 	{
 		for (int layer = 4; layer >= 1; --layer)
 		{
@@ -516,7 +516,7 @@ bool modules::arraylist::draw_overlay(ImDrawList* draw_list, float right_margin,
 			: bar_left - metrics.padding_x - entry.keybind_width - metrics.chip_padding * 2.0f - metrics.keybind_gap;
 		const ImVec4 label_clip(rect.left, rect.top, label_right, rect.bottom);
 
-		if (text_shadow)
+		if (gui::arraylist_settings.read().text_shadow)
 		{
 			draw_list->AddText(font, metrics.font_size,
 				ImVec2(std::floor(text_x + 1.0f), std::floor(text_y + 1.0f)),
@@ -560,7 +560,7 @@ void modules::arraylist::render_overlay()
 {
 	if (gui::hud_editor_active) return;
 
-	draw_overlay(ImGui::GetForegroundDrawList(), gui::arraylist_pos_x, gui::arraylist_pos_y,
+	draw_overlay(ImGui::GetForegroundDrawList(), gui::arraylist_settings.read().position_x, gui::arraylist_settings.read().position_y,
 		false, nullptr);
 }
 

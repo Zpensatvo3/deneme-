@@ -26,11 +26,16 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="build-config\MinecraftTarget.props" />
-  <Target Name="BuildGameBridge" BeforeTargets="ResourceCompile"
-          Inputs="$(ProjectDir)src\bridge\GameBridge.java;$(ProjectDir)src\bridge\UtilityBridge.java;$(ProjectDir)src\bridge\ItemBridge.java;$(ProjectDir)src\bridge\InventoryBridge.java;$(ProjectDir)src\bridge\WorldBridge.java;$(ProjectDir)src\bridge\ClientTickRelay.java"
-          Outputs="$(ProjectDir)assets\hybrid\net\onestep\hybrid\GameBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\UtilityBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\ItemBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\InventoryBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\WorldBridge.class;$(ProjectDir)assets\hybrid\net\onestep\hybrid\ClientTickRelay.class">
+  <Target Name="InvalidateMissingGameBridgeOutputs">
+    <Delete Files="$(ProjectDir)assets\hybrid\manager_build.stamp"
+            Condition="!Exists('$(ProjectDir)assets\hybrid\ManagerCore.bin') Or !Exists('$(ProjectDir)assets\hybrid\module_manager_catalog.inc') Or !Exists('$(ProjectDir)assets\hybrid\catalog_values.hpp') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\GameBridge.class') Or !Exists('$(ProjectDir)assets\hybrid\net\onestep\hybrid\ManagerBridge.class')" />
+  </Target>
+  <Target Name="BuildGameBridge" BeforeTargets="ClCompile;ResourceCompile" DependsOnTargets="InvalidateMissingGameBridgeOutputs"
+          Inputs="$(ProjectDir)src\bridge\GameBridge.java;$(ProjectDir)src\bridge\UtilityBridge.java;$(ProjectDir)src\bridge\ItemBridge.java;$(ProjectDir)src\bridge\InventoryBridge.java;$(ProjectDir)src\bridge\WorldBridge.java;$(ProjectDir)src\bridge\ClientTickRelay.java;$(ProjectDir)src\bridge\Json.java;$(ProjectDir)src\bridge\ModuleCatalog.java;$(ProjectDir)src\bridge\ModuleManager.java;$(ProjectDir)src\bridge\ConfigManager.java;$(ProjectDir)src\bridge\ManagerBridge.java;$(ProjectDir)scripts\Pack-ManagerCore.py"
+          Outputs="$(ProjectDir)assets\hybrid\manager_build.stamp">
     <MakeDir Directories="$(ProjectDir)assets\hybrid" />
-    <Exec Command="javac --release 17 -encoding UTF-8 -g:none -d &quot;$(ProjectDir)assets\hybrid&quot; &quot;$(ProjectDir)src\bridge\GameBridge.java&quot; &quot;$(ProjectDir)src\bridge\UtilityBridge.java&quot; &quot;$(ProjectDir)src\bridge\ItemBridge.java&quot; &quot;$(ProjectDir)src\bridge\InventoryBridge.java&quot; &quot;$(ProjectDir)src\bridge\WorldBridge.java&quot; &quot;$(ProjectDir)src\bridge\ClientTickRelay.java&quot;" />
+    <Exec Command="javac --release 17 -encoding UTF-8 -g:none -d &quot;$(ProjectDir)assets\hybrid&quot; &quot;$(ProjectDir)src\bridge\GameBridge.java&quot; &quot;$(ProjectDir)src\bridge\UtilityBridge.java&quot; &quot;$(ProjectDir)src\bridge\ItemBridge.java&quot; &quot;$(ProjectDir)src\bridge\InventoryBridge.java&quot; &quot;$(ProjectDir)src\bridge\WorldBridge.java&quot; &quot;$(ProjectDir)src\bridge\ClientTickRelay.java&quot; &quot;$(ProjectDir)src\bridge\Json.java&quot; &quot;$(ProjectDir)src\bridge\ModuleCatalog.java&quot; &quot;$(ProjectDir)src\bridge\ModuleManager.java&quot; &quot;$(ProjectDir)src\bridge\ConfigManager.java&quot; &quot;$(ProjectDir)src\bridge\ManagerBridge.java&quot;" />
+    <Exec Command="python -X utf8 &quot;$(ProjectDir)scripts\Pack-ManagerCore.py&quot; --classes &quot;$(ProjectDir)assets\hybrid&quot; --output &quot;$(ProjectDir)assets\hybrid\ManagerCore.bin&quot; --stamp &quot;$(ProjectDir)assets\hybrid\manager_build.stamp&quot;" />
   </Target>
   <Target Name="ValidateGameBridgeContracts" BeforeTargets="ResourceCompile" DependsOnTargets="BuildGameBridge">
     <Exec Command="python -X utf8 &quot;$(ProjectDir)scripts\Check-GameBridgeContracts.py&quot;" />
@@ -242,6 +247,7 @@
     <ClCompile Include="src\services\game\hotbar_service.cpp" />
     <ClCompile Include="src\services\game\client_context.cpp" />
     <ClCompile Include="src\services\game\menu_input.cpp" />
+    <ClCompile Include="src\services\game\manager_bridge.cpp" />
     <ClCompile Include="src\services\game\hybrid_bridge.cpp" />
     <ClCompile Include="src\services\game\utility_bridge.cpp" />
     <ClCompile Include="src\services\game\item_bridge.cpp" />
@@ -259,6 +265,7 @@
     <ClCompile Include="src\modules\visual\*.cpp" />
     <ClCompile Include="src\modules\vape\*.cpp" />
     <ClCompile Include="src\modules\render\*.cpp" />
+    <ClCompile Include="src\modules\core\manager.cpp" />
     <ClCompile Include="src\modules\core\module.cpp" />
     <ClCompile Include="src\modules\core\config_fields.cpp" />
     <ClCompile Include="src\modules\core\module_registry.cpp" />
@@ -659,8 +666,8 @@
     <ClInclude Include="src\modules\core\module_runtime_state.hpp" />
     <ClInclude Include="src\modules\core\config_fields.hpp" />
     <ClInclude Include="src\modules\core\config_json.hpp" />
-    <ClInclude Include="src\modules\core\config_migration_fields.hpp" />
-    <ClInclude Include="src\modules\core\totem_config_migration.hpp" />
+    <ClInclude Include="src\modules\core\manager.hpp" />
+    <ClInclude Include="src\services\game\manager_bridge.hpp" />
     <ClInclude Include="src\modules\core\module_registry.hpp" />
     <ClInclude Include="src\modules\core\public_config.hpp" />
     <ClInclude Include="src\modules\modules.hpp" />

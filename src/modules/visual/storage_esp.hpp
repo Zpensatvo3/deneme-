@@ -17,11 +17,8 @@ class storage_esp : public module
 		void on_disable(::cache& cache) override;
 		void render_options() override;
 		float get_options_height() override { return 250.0f; }
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::storage_esp::schema()); }
-
 	private:
-        modules::settings::store<module_settings::storage_esp> settings_;
+modules::settings::store<module_settings::storage_esp> settings_{"storage_esp"};
 		struct marker { double x, y, z; std::string label; };
 		std::size_t scan_index = 0;
         std::chrono::steady_clock::time_point next_scan{}; // Worker-owned throttle.

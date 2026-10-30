@@ -6,10 +6,10 @@
 #include <cassert>
 #include <limits>
 
-class trigger_fixture final : public modules::module
+class trigger_fixture final : public modules::config_fixture
 {
 public:
-    trigger_fixture() : module("triggerbot") {}
+    trigger_fixture() : config_fixture("triggerbot") {}
     trigger_engine::config settings;
     int commits = 0;
     void visit_config(modules::config_visitor& v) override
@@ -61,7 +61,7 @@ int main()
         assert(!fixture.apply_config_settings(bad));
         assert(fixture.export_config_settings() == before && fixture.commits == commits);
     }
-    assert(modules::config_validation_error(fixture, R"({"players":false})").find("cannot be represented safely") != std::string::npos);
+    assert(fixture.validation_error(R"({"players":false})").find("cannot be represented safely") != std::string::npos);
     assert(fixture.apply_config_settings("{}") && fixture.commits == commits + 1);
     std::cout << "Trigger config compatibility, precedence, atomic import and diagnostics passed.\n";
 }

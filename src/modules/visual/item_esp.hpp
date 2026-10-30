@@ -15,8 +15,7 @@ namespace modules
         void render_overlay() override;
         void render_options() override;
         float get_options_height() override { return 340.f; }
-        void visit_config(config_visitor& v) override { settings_.visit(v, module_settings::item_esp::schema()); }
     private:
-        modules::settings::store<module_settings::item_esp> settings_;
+modules::settings::store<module_settings::item_esp> settings_{"item_esp"};
     };
 }

@@ -26,13 +26,14 @@
 #include <cassert>
 #include <set>
 #include "../src/modules/core/settings_store.hpp"
+#include "support/dto_fixture.hpp"
 
 template<class Model>
-class settings_fixture final : public modules::module
+class settings_fixture final : public modules::config_fixture
 {
 public:
-    settings_fixture() : module("utility_fixture") {}
-    modules::settings::store<Model> settings;
+    settings_fixture() : config_fixture("utility_fixture") {}
+    dto_fixture<Model> settings;
     void visit_config(modules::config_visitor& visitor) override
     {
         settings.visit(visitor, Model::schema());
@@ -70,10 +71,10 @@ void check_contract(std::initializer_list<const char*> expected)
     assert(keys == std::set<std::string>(expected.begin(), expected.end()));
 }
 
-class blatant_fixture final : public modules::module
+class blatant_fixture final : public modules::config_fixture
 {
 public:
-    blatant_fixture() : module("blatant_fixture") {}
+    blatant_fixture() : config_fixture("blatant_fixture") {}
     blatant_aim_engine::config settings;
     void visit_config(modules::config_visitor& v) override { blatant_aim_engine::visit_config(v, settings); }
 };

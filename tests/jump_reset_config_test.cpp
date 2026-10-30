@@ -5,10 +5,10 @@
 #include <cassert>
 #include <initializer_list>
 
-class jump_fixture final : public modules::module
+class jump_fixture final : public modules::config_fixture
 {
 public:
-    jump_fixture() : module("jump_reset") {}
+    jump_fixture() : config_fixture("jump_reset") {}
     jump_reset_config::config settings;
     int revisions = 0;
     void visit_config(modules::config_visitor& v) override

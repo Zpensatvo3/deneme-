@@ -5,10 +5,10 @@ namespace module_settings
 {
     struct item_esp
     {
-        bool show_boxes = true, show_names = true, show_count = true, show_distance = true;
-        bool use_theme_color = true;
-        float color[4]{1.f, .8f, .3f, 1.f};
-        float line_thickness = 1.4f, fill_opacity = .08f;
+        bool show_boxes = modules::catalog::item_esp_show_boxes_default, show_names = modules::catalog::item_esp_show_names_default, show_count = modules::catalog::item_esp_show_count_default, show_distance = modules::catalog::item_esp_show_distance_default;
+        bool use_theme_color = modules::catalog::item_esp_use_theme_color_default;
+        float color[4]{modules::catalog::item_esp_color_default[0], modules::catalog::item_esp_color_default[1], modules::catalog::item_esp_color_default[2], modules::catalog::item_esp_color_default[3]};
+        float line_thickness = modules::catalog::item_esp_line_thickness_default, fill_opacity = modules::catalog::item_esp_fill_opacity_default;
         bool operator==(const item_esp&) const = default;
         static std::span<const modules::settings::descriptor<item_esp>> schema()
         {
@@ -20,8 +20,8 @@ namespace module_settings
                 d::toggle("show_distance", {"Show Distance"}, &item_esp::show_distance),
                 d::toggle("use_theme_color", {"Theme Color"}, &item_esp::use_theme_color),
                 d::color("color", {"Item Color"}, &item_esp::color).when([](const item_esp& c) { return !c.use_theme_color; }),
-                d::number("line_thickness", {"Line Thickness"}, &item_esp::line_thickness, .5f, 3.f, "%.1f", &item_esp::show_boxes),
-                d::number("fill_opacity", {"Fill Opacity"}, &item_esp::fill_opacity, 0.f, .35f, "%.2f", &item_esp::show_boxes)
+                d::number("line_thickness", {"Line Thickness"}, &item_esp::line_thickness, modules::catalog::item_esp_line_thickness_minimum, modules::catalog::item_esp_line_thickness_maximum, "%.1f", &item_esp::show_boxes),
+                d::number("fill_opacity", {"Fill Opacity"}, &item_esp::fill_opacity, modules::catalog::item_esp_fill_opacity_minimum, modules::catalog::item_esp_fill_opacity_maximum, "%.2f", &item_esp::show_boxes)
             };
             return fields;
         }

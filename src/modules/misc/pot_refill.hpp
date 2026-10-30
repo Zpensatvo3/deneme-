@@ -20,10 +20,8 @@ class pot_refill : public module
 		void on_render_shutdown() override;
 		bool render_when_disabled() const override { return true; }
 		float get_options_height() override { return 240.0f; }
-		void visit_config(config_visitor& v) override { settings_.visit(v, module_settings::pot_refill::schema()); }
-
 	private:
-		modules::settings::store<module_settings::pot_refill> settings_;
+modules::settings::store<module_settings::pot_refill> settings_{"pot_refill"};
 		struct runtime;
 		std::unique_ptr<runtime> runtime_;
 		std::atomic_bool reset_requested{ true };

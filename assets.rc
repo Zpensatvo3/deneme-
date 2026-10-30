@@ -29,4 +29,5 @@ IDR_CAPE_PHOENIX RCDATA "assets\\cosmetics\\cape-phoenix.png"
 IDR_CAPE_ASTRAL RCDATA "assets\\cosmetics\\cape-astral.png"
 
 IDR_CLIENT_TICK_EVENTS RCDATA "assets\\hybrid\\net\\onestep\\hybrid\\ClientTickRelay.class"
+IDR_MANAGER_CORE RCDATA "assets\\hybrid\\ManagerCore.bin"
 IDR_CLIENT_TICK_TRANSFORMER RCDATA "assets\\hybrid\\net\\onestep\\hybrid\\ClientTickTransformer.class"

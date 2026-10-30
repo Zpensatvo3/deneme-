@@ -37,7 +37,7 @@ def main():
             (args.preview_dir / "helmet.rgba").write_bytes(struct.pack("<ii", *logo.size) + logo.tobytes())
     sources = ["tests/grim_ui_test.cpp", "src/ui/keybinds_page.cpp", "src/configs/keybind_profile.cpp", "src/modules/core/public_config.cpp",
                "src/gui/widgets.cpp", "src/ui/hud_editor.cpp", "src/modules/core/module.cpp",
-               "src/modules/core/config_fields.cpp", "src/utils/utils.cpp",
+               "src/modules/core/config_fields.cpp", "src/utils/utils.cpp", "tests/support/manager_fixture.cpp",
 
                "include/imgui/imgui.cpp", "include/imgui/imgui_draw.cpp", "include/imgui/imgui_widgets.cpp",
                "include/imgui/imgui_tables.cpp"]

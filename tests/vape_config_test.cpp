@@ -6,11 +6,11 @@
 #include <limits>
 #include <set>
 
-class vape_fixture final : public modules::module
+class vape_fixture final : public modules::config_fixture
 {
 public:
     explicit vape_fixture(modules::vape_kind selected)
-        : module("vape_fixture"), kind(selected), settings(vape_settings::defaults(selected)) {}
+        : config_fixture("vape_fixture"), kind(selected), settings(vape_settings::defaults(selected)) {}
     modules::vape_kind kind;
     vape_settings::config settings;
     int resets = 0;

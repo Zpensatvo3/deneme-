@@ -19,12 +19,9 @@ class pearl_macro : public module
         void on_render_shutdown() override;
         bool render_when_disabled() const override { return mc::target.build_id == 12111; }
 		float get_options_height() override { return 190.0f; }
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::pearl_macro::schema()); }
-
 	private:
         std::atomic_bool native_fallback_{false}, reset_requested_{true};
-		modules::settings::store<module_settings::pearl_macro> settings_;
+modules::settings::store<module_settings::pearl_macro> settings_{"pearl_macro"};
 		enum class State { IDLE, WAIT_SWITCH, HOLD_USE, WAIT_RETURN };
 		State state = State::IDLE;
 		int old_slot = -1;

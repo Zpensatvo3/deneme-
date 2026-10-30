@@ -35,7 +35,7 @@ public final class TriggerbotBridgeTest {
     }
     private static void tick(WorldBridge b) throws Exception { tick(b, 0, 0, false); }
     private static void tick(WorldBridge b, int reaction, int criticals, boolean onClick) throws Exception {
-        b.tickTrigger(true, 1, manual, .9f, .9f, reaction, reaction, 0, 0, criticals, onClick, true, false);
+        net.onestep.hybrid.ManagerTestDriver.trigger(b,true, 1, manual, .9f, .9f, reaction, reaction, 0, 0, criticals, onClick, true, false);
     }
     private static void ready(WorldBridge b) throws Exception { time(b, "triggerReady", System.nanoTime() - 1_000_000_000L); }
     private static WorldBridge bridge() throws Exception { return new WorldBridge(TriggerbotBridgeTest.class.getClassLoader(), 12111); }
@@ -66,7 +66,7 @@ public final class TriggerbotBridgeTest {
         c = setup(); b = bridge(); tick(b, 150, 0, false); ready(b); c.field_1687 = new class_638(); tick(b, 150, 0, false);
         check(c.field_1761.attacks == 0, "world replacement restarts reaction");
         c = setup(); b = bridge(); tick(b, 150, 0, false); ready(b);
-        b.tickTrigger(true, 2, 0, .9f, .9f, 150, 150, 0, 0, 0, false, true, false);
+        net.onestep.hybrid.ManagerTestDriver.trigger(b,true, 2, 0, .9f, .9f, 150, 150, 0, 0, 0, false, true, false);
         check(c.field_1761.attacks == 0, "generation change restarts reaction");
 
         for (int reason = 0; reason < 9; ++reason) {
@@ -98,7 +98,7 @@ public final class TriggerbotBridgeTest {
         check(c.field_1761.attacks == 1, "smart critical wait expires");
 
         c = setup(); b = bridge(); tick(b, 150, 0, false);
-        b.tickTrigger(false, 1, 0, .9f, .9f, 0, 0, 0, 0, 0, false, true, false);
+        net.onestep.hybrid.ManagerTestDriver.trigger(b,false, 1, 0, .9f, .9f, 0, 0, 0, 0, 0, false, true, false);
         check(c.field_1761.attacks == 0 && field("triggerTarget").get(b) == null, "disable clears pending target");
         c = setup(); b = bridge(); c.field_1761.fail = true;
         boolean failed = false; try { tick(b); } catch (ReflectiveOperationException expected) { failed = true; }

@@ -32,6 +32,7 @@ jobs:
         run: node --test config-service/worker.test.mjs
       - name: Test Java gameplay controllers and JNI contracts
         run: |
+          python scripts/Test-ModuleManagers.py
           python scripts/Test-HybridBridge.py
           python scripts/Test-GameBridgeContracts.py
       - name: Verify shared client tick bytecode hooks

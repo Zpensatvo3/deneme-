@@ -48,7 +48,7 @@ namespace
                 static_cast<const jbyte*>(bytes), static_cast<jsize>(size)));
             auto create = checked(env, env->GetMethodID(utility, "<init>", "(Ljava/lang/ClassLoader;I)V"));
             prepare_method = checked(env, env->GetMethodID(utility, "prepare", "(I)V"));
-            update_method = checked(env, env->GetMethodID(utility, "update", "(IZIZ)V"));
+            update_method = checked(env, env->GetMethodID(utility, "update", "(IZ)V"));
             release_method = checked(env, env->GetMethodID(utility, "release", "(I)Z"));
             stop_method = checked(env, env->GetMethodID(utility, "stop", "()V"));
             auto instance = checked(env, env->NewObject(utility, create, parent, static_cast<jint>(mc::target.build_id)));
@@ -66,7 +66,7 @@ namespace
     }
 }
 
-services::game::hybrid::result services::game::utility::update(feature operation, bool active, int value, bool physical_use_held)
+services::game::hybrid::result services::game::utility::update(feature operation, bool active, bool physical_use_held)
 {
     using hybrid::result;
     if constexpr (mc::target.build_id != 12111)
@@ -108,8 +108,7 @@ services::game::hybrid::result services::game::utility::update(feature operation
         }
         prepared[index] = true;
     }
-    env->CallVoidMethod(bridge, update_method, static_cast<jint>(operation), static_cast<jboolean>(active),
-        static_cast<jint>(value), static_cast<jboolean>(physical_use_held));
+    env->CallVoidMethod(bridge, update_method, static_cast<jint>(operation), static_cast<jboolean>(physical_use_held));
     if (platform::jni_context::clear_exception())
     {
         quarantined[index] = true;

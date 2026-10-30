@@ -33,11 +33,10 @@ TESTS = {
     "sdk_mappings": ["tests/sdk_mappings_test.cpp"],
     "minecraft_version": ["tests/minecraft_version_test.cpp"],
     "jni_member_cache": ["tests/jni_member_cache_test.cpp"],
-    "settings_store": ["tests/settings_store_test.cpp"],
+    "settings_store": ["tests/settings_store_test.cpp", "src/modules/core/config_fields.cpp"],
     "utility_settings": ["tests/utility_settings_test.cpp", "src/modules/core/config_fields.cpp"],
     "remaining_settings": ["tests/remaining_settings_test.cpp", "src/modules/core/config_fields.cpp"],
-    "settings_renderer": ["tests/settings_renderer_test.cpp"],
-    "public_config": ["tests/public_config_test.cpp", "src/modules/core/public_config.cpp", "src/modules/core/config_fields.cpp"],
+    "settings_renderer": ["tests/settings_renderer_test.cpp", "src/modules/core/config_fields.cpp"],
     "config_service": ["tests/config_service_test.cpp"],
     "snapshot_session": ["tests/snapshot_session_test.cpp"],
 }
@@ -59,6 +58,9 @@ def main():
     with tempfile.TemporaryDirectory(prefix="onestep-offline-") as directory:
         def run_test(item):
             name, sources = item
+            if name in ("config_fields", "aimassist_config", "jump_reset_config", "trigger_config", "vape_config",
+                        "settings_store", "utility_settings", "remaining_settings", "settings_renderer", "sdk_mappings"):
+                sources = [*sources, "tests/support/manager_fixture.cpp"]
             work = Path(directory) / name
             work.mkdir()
             output = work / (name + (".exe" if os.name == "nt" else ""))

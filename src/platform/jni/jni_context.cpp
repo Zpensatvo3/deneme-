@@ -19,10 +19,6 @@ bool platform::jni_context::bind_current_thread()
     return jni::get_env() != nullptr;
 }
 
-JNIEnv* platform::jni_context::current_env()
-{
-    return jni::get_env();
-}
 
 bool platform::jni_context::clear_exception()
 {

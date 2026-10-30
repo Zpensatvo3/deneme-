@@ -33,7 +33,6 @@ int main()
     static_assert(std::string_view(fov::get_signature()) == "(Lnet/minecraft/class_4184;FZ)F"sv);
     static_assert(std::string_view(decltype(maps::MinecraftClient_members::renderTickCounter)::get_name()) == "field_52750"sv);
     static_assert(std::string_view(decltype(chams_model::Model_members::setAngles)::get_signature()) == "(Lnet/minecraft/class_10055;)V"sv);
-    static_assert(decltype(maps::ClientPlayerEntity_members::findCrosshairTarget)::is_method_static());
     static_assert(std::string_view(decltype(maps::Entity_members::getWorld)::get_name()) == "method_73183"sv);
     static_assert(std::string_view(decltype(maps::Camera_members::getPos)::get_name()) == "method_71156"sv);
     static_assert(std::string_view(decltype(maps::Mouse_members::onMouseInput)::get_signature()) == "(JLnet/minecraft/class_11910;I)V"sv);

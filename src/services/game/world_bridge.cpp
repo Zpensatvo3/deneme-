@@ -418,12 +418,12 @@ namespace
                 {const_cast<char*>("totemPermitted"), const_cast<char*>("(J)Z"), reinterpret_cast<void*>(&totem_permitted)}
             };
             if (env->RegisterNatives(type, callbacks, static_cast<jint>(std::size(callbacks))) != JNI_OK || env->ExceptionCheck()) throw std::runtime_error("World native service binding");
-            totem_tick_id = checked(env,env->GetMethodID(type,"tickTotem","(ZJ[IZ)V"));
+            totem_tick_id = checked(env,env->GetMethodID(type,"tickTotem","(J)V"));
             totem_cancel_id = checked(env,env->GetMethodID(type,"cancelTotem","()V"));
             tick_install_events_id = checked(env,env->GetMethodID(type,"installTickEvents","()V"));
-            jump_tick_id = checked(env, env->GetMethodID(type, "tickJump", "(ZJIIIZ)V"));
+            jump_tick_id = checked(env, env->GetMethodID(type, "tickJump", "(J)V"));
             jump_cancel_id = checked(env, env->GetMethodID(type, "cancelJump", "()V"));
-            trigger_tick_id = checked(env, env->GetMethodID(type, "tickTrigger", "(ZJJFFIIIIIZZZ)V"));
+            trigger_tick_id = checked(env, env->GetMethodID(type, "tickTrigger", "(JJ)V"));
             trigger_cancel_id = checked(env, env->GetMethodID(type, "cancelTrigger", "()V"));
             auto create = checked(env, env->GetMethodID(type, "<init>", "(Ljava/lang/ClassLoader;I[Ljava/lang/String;)V"));
             prepare_id = checked(env, env->GetMethodID(type, "prepare", "(I)V"));
@@ -512,7 +512,7 @@ bool services::game::world_bridge::release_pearl()
     const bool released = jni::get_env()->CallBooleanMethod(bridge, release_pearl_id) == JNI_TRUE;
     return !platform::jni_context::clear_exception() && released;
 }
-void services::game::world_bridge::tick_trigger(const trigger_engine::config& settings, bool active,
+void services::game::world_bridge::tick_trigger(bool active,
     const std::atomic<std::uint64_t>& generation)
 {
     if (!active || !permitted()) { cancel_trigger(); return; }
@@ -522,13 +522,8 @@ void services::game::world_bridge::tick_trigger(const trigger_engine::config& se
     trigger_expected_generation = generation.load(std::memory_order_acquire);
     trigger_reset_source = &generation;
     auto env = jni::get_env();
-    env->CallVoidMethod(bridge, trigger_tick_id, JNI_TRUE,
-        static_cast<jlong>(trigger_expected_generation), static_cast<jlong>(services::input::manual_attack_generation()),
-        static_cast<jfloat>(settings.cooldown[0]), static_cast<jfloat>(settings.cooldown[1]),
-        static_cast<jint>(settings.reaction[0]), static_cast<jint>(settings.reaction[1]),
-        static_cast<jint>(settings.targets), static_cast<jint>(settings.weapon), static_cast<jint>(settings.criticals),
-        static_cast<jboolean>(settings.on_click), static_cast<jboolean>(settings.swing_hand),
-        static_cast<jboolean>(settings.click_simulation));
+    env->CallVoidMethod(bridge, trigger_tick_id,
+        static_cast<jlong>(trigger_expected_generation), static_cast<jlong>(services::input::manual_attack_generation()));
     if (!checked_result(4, true)) cancel_trigger();
 }
 void services::game::world_bridge::cancel_trigger()
@@ -544,7 +539,7 @@ void services::game::world_bridge::cancel_trigger()
         suspended[4] = true;
     }
 }
-void services::game::world_bridge::tick_jump(const jump_reset_config::config& settings, bool active,
+void services::game::world_bridge::tick_jump(bool active,
     const std::atomic<std::uint64_t>& generation)
 {
     if (!active || !permitted()) { cancel_jump(); return; }
@@ -553,9 +548,7 @@ void services::game::world_bridge::tick_jump(const jump_reset_config::config& se
     if (prepare(5) != hybrid::result::ready) { cancel_jump(); return; }
     jump_expected_generation = generation.load(std::memory_order_acquire);
     jump_reset_source = &generation;
-    jni::get_env()->CallVoidMethod(bridge, jump_tick_id, JNI_TRUE,
-        static_cast<jlong>(jump_expected_generation), static_cast<jint>(settings.mode),
-        static_cast<jint>(settings.chance), static_cast<jint>(settings.jump_delay_ms), static_cast<jboolean>(settings.only_combat));
+    jni::get_env()->CallVoidMethod(bridge, jump_tick_id, static_cast<jlong>(jump_expected_generation));
     if (!checked_result(5, true)) cancel_jump();
 }
 void services::game::world_bridge::cancel_jump()
@@ -566,7 +559,7 @@ void services::game::world_bridge::cancel_jump()
     jni::get_env()->CallVoidMethod(bridge, jump_cancel_id);
     if (platform::jni_context::clear_exception()) suspended[5] = true;
 }
-void services::game::world_bridge::tick_totem(const module_settings::auto_totem& s, bool active,
+void services::game::world_bridge::tick_totem(bool active,
     const std::atomic<std::uint64_t>& generation, std::uint64_t expected_generation)
 {
     if (!active || !permitted() || generation.load(std::memory_order_acquire) != expected_generation) { cancel_totem(); return; }
@@ -575,13 +568,7 @@ void services::game::world_bridge::tick_totem(const module_settings::auto_totem&
     if (!connect(jni::get_env()) || !install_tick_hooks(jni::get_env()) || prepare(7) != hybrid::result::ready) { cancel_totem(); return; }
     totem_reset_source = &generation; totem_expected_generation = expected_generation;
     auto env = jni::get_env();
-    auto values = env->NewIntArray(7);
-    if (platform::jni_context::clear_exception() || !values) { cancel_totem(); return; }
-    const jint settings[]{s.mode,s.delay,static_cast<jint>(s.hotbar),s.totem_slot,
-        static_cast<jint>(s.auto_switch),static_cast<jint>(s.force_totem),s.stay_open_for};
-    env->SetIntArrayRegion(values,0,7,settings);
-    if (platform::jni_context::clear_exception()) { cancel_totem(); return; }
-    env->CallVoidMethod(bridge,totem_tick_id,JNI_TRUE,static_cast<jlong>(expected_generation),values,static_cast<jboolean>(s.auto_open));
+    env->CallVoidMethod(bridge,totem_tick_id,static_cast<jlong>(expected_generation));
     if (!checked_result(7,true)) cancel_totem();
 }
 void services::game::world_bridge::cancel_totem()

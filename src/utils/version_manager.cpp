@@ -8,7 +8,6 @@ namespace mc
     {
         version current = version::unknown;
         std::string detected_name = "unknown";
-        std::string runtime_label = "NATIVE RUNTIME  //  unknown";
 
         // Fabric API names are independent of Minecraft's intermediary mappings.
         // Resolve the game's loader through JVMTI on the attached native thread.
@@ -58,19 +57,16 @@ namespace mc
 
     version get_version() { return current; }
     const char* get_version_name() { return detected_name.c_str(); }
-    const char* get_runtime_label() { return runtime_label.c_str(); }
     void set_version(version value)
     {
         current = value;
         detected_name = version_name(value);
-        runtime_label = "NATIVE RUNTIME  //  " + detected_name;
     }
     version detect(JNIEnv* env, jvmti* classes)
     {
         const auto name = read_fabric_version(env, classes);
         set_version(parse_version(name));
         if (!name.empty()) detected_name = name;
-        runtime_label = "NATIVE RUNTIME  //  " + detected_name;
         return current;
     }
 }

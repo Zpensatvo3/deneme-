@@ -747,7 +747,8 @@ namespace
         {
             ImGui::BeginDisabled(state.selected != module);
             const ImVec2 content_top = ImGui::GetCursorScreenPos();
-            gui::option_toggle("Enabled", &module->enabled, false);
+            bool requested_enabled = module->enabled;
+            if (gui::option_toggle("Enabled", &requested_enabled, false)) module->enabled = requested_enabled;
             const ImVec2 top = ImGui::GetCursorScreenPos();
             draw_text(ImGui::GetWindowDrawList(), gui::ui_font, 13.f,
                 ImVec2(top.x + 10.f, top.y + 8.f), ImGui::GetColorU32(ImGuiCol_Text), "Keybind");
@@ -761,7 +762,7 @@ namespace
                 ImVec2(top.x + width - 10.f, top.y + 34.f), IM_COL32(255, 255, 255, 12));
             ImGui::SetCursorScreenPos(ImVec2(top.x, top.y + 42.f));
             ImGui::PushItemWidth(-8.f);
-            module->render_options();
+            module->render_managed_options();
             ImGui::PopItemWidth();
             const ImGuiWindow* options_window = ImGui::GetCurrentWindow();
             // Measure all rows, including clipped and conditionally visible settings.

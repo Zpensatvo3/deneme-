@@ -84,10 +84,12 @@ class RepositoryHygieneTest(unittest.TestCase):
         self.assertEqual(len(validate_markdown(path)), 2)
 
     def test_all_36_module_ids_and_order_are_preserved(self):
-        catalog = (ROOT / "src/modules/module_catalog.cpp").read_text(encoding="utf-8")
-        ids = re.findall(r'\{\s*"([a-z0-9_]+)"\s*,\s*&', catalog)
+        catalog = (ROOT / "src/bridge/ModuleCatalog.java").read_text(encoding="utf-8")
+        ids = re.findall(r'^\s*m\("([a-z0-9_]+)"', catalog, re.M)
         self.assertEqual(len(BASELINE_IDS), 36)
         self.assertEqual(ids, BASELINE_IDS)
+        generated = (ROOT / "assets/hybrid/module_manager_catalog.inc").read_text(encoding="utf-8")
+        self.assertEqual(re.findall(r'\{\s*"([a-z0-9_]+)"\s*,\s*&', generated), BASELINE_IDS)
         manifest = json.loads((ROOT / "src/modules/settings_manifest.json").read_text(encoding="utf-8"))
         self.assertEqual({entry["id"] for entry in manifest["modules"]}, set(BASELINE_IDS))
 

@@ -1,4 +1,4 @@
-#include "../src/modules/core/module.hpp"
+#include "../src/modules/core/config_fields.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -7,30 +7,31 @@
 
 namespace modules
 {
-    module::module(const char* module_name, const char* module_category, const char*)
-        : id_storage("config_test"), name(module_name), category(module_category) {}
-    void module::run(::cache&) {}
-    void module::render_options() {}
-    void module::on_enable(::cache&) {}
-    void module::on_disable(::cache&) {}
-    std::string module::export_config_settings() const
+    class config_fixture
     {
-        return serialize_config_fields(const_cast<module&>(*this));
-    }
-    bool module::apply_config_settings(const std::string& object)
-    {
-        return deserialize_config_fields(*this, object);
-    }
-    bool module::validate_config_settings(const std::string& object) const
-    {
-        return validate_config_fields(const_cast<module&>(*this), object);
-    }
+    public:
+        explicit config_fixture(const char*) {}
+        virtual ~config_fixture() = default;
+        virtual void visit_config(config_visitor&) {}
+        std::string export_config_settings() const {
+            return serialize_config_fields([&](config_visitor& visitor) { const_cast<config_fixture&>(*this).visit_config(visitor); });
+        }
+        bool apply_config_settings(const std::string& object) {
+            return deserialize_config_fields([&](config_visitor& visitor) { visit_config(visitor); }, object);
+        }
+        bool validate_config_settings(const std::string& object) const {
+            return validate_config_fields([&](config_visitor& visitor) { const_cast<config_fixture&>(*this).visit_config(visitor); }, object);
+        }
+        std::string validation_error(const std::string& object) {
+            return config_validation_error([&](config_visitor& visitor) { visit_config(visitor); }, object);
+        }
+    };
 }
 
-class sample_module final : public modules::module
+class sample_module final : public modules::config_fixture
 {
 public:
-    sample_module() : module("sample") {}
+    sample_module() : config_fixture("sample") {}
 
     void visit_config(modules::config_visitor& visitor) override
     {

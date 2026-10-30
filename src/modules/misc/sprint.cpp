@@ -21,9 +21,8 @@ void modules::sprint::render_overlay()
         reset_requested_.store(true, std::memory_order_release);
         return;
     }
-    const auto settings = settings_.read();
     services::game::utility::update(services::game::utility::feature::sprint,
-        enabled, settings.stop_while_using_item ? 1 : 0);
+        enabled);
 }
 
 void modules::sprint::on_render_shutdown()

@@ -165,9 +165,14 @@ public final class ItemBridge {
     private void resetSession() {
         armed = false; nextUseNanos = 0; sessionPlayer = sessionWorld = null; expSequence = 0;
     }
-    public void update(boolean enabled, boolean permitted, boolean held, int minCps, int maxCps)
+    private long managerGeneration = -1;
+    public void update(boolean permitted, boolean held)
             throws ReflectiveOperationException {
         if (clientOnThread() == null) return;
+        var state = ManagerBridge.state().module("fast_exp");
+        boolean enabled = state.enabled();
+        int minCps = ManagerBridge.integer(state, "min_cps"), maxCps = ManagerBridge.integer(state, "max_cps");
+        if (managerGeneration != state.generation()) { resetSession(); blocked = false; managerGeneration = state.generation(); }
         if (!enabled || !held) { blocked = false; resetSession(); return; }
         if (!permitted) { resetSession(); return; }
         if (blocked) return;
@@ -183,7 +188,7 @@ public final class ItemBridge {
         long now = System.nanoTime();
         if (armed && now - nextUseNanos < 0) return;
         try {
-            if (!useExp(observed, true)) { blocked = true; resetSession(); return; }
+            if (!ManagerBridge.current("fast_exp", state.generation()) || !useExp(observed, true)) { blocked = true; resetSession(); return; }
         } catch (ReflectiveOperationException | RuntimeException failure) {
             blocked = true; resetSession(); throw failure;
         }

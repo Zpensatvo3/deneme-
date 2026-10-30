@@ -5,18 +5,18 @@ namespace module_settings
 {
     struct fast_exp
     {
-        int min_cps = 16;
-        int max_cps = 20;
-        int legacy_cps = 0;
+        int min_cps = modules::catalog::fast_exp_min_cps_default;
+        int max_cps = modules::catalog::fast_exp_max_cps_default;
+        int legacy_cps = modules::catalog::fast_exp_cps_default;
         bool operator==(const fast_exp&) const = default;
         static std::span<const modules::settings::descriptor<fast_exp>> schema()
         {
             using model = fast_exp;
             using setting = modules::settings::descriptor<model>;
             static const setting fields[]{
-                setting::integer("min_cps", {"Minimum CPS"}, &model::min_cps, 1, 50, "%d CPS").display_minimum(5).display_maximum(40),
-                setting::integer("max_cps", {"Maximum CPS"}, &model::max_cps, 1, 50, "%d CPS").display_minimum(5).display_maximum(40),
-                setting::integer("cps", {"Legacy CPS"}, &model::legacy_cps, -1000000, 1000000).hidden(),
+                setting::integer("min_cps", {"Minimum CPS"}, &model::min_cps, modules::catalog::fast_exp_min_cps_minimum, modules::catalog::fast_exp_min_cps_maximum, "%d CPS").display_minimum(5).display_maximum(40),
+                setting::integer("max_cps", {"Maximum CPS"}, &model::max_cps, modules::catalog::fast_exp_max_cps_minimum, modules::catalog::fast_exp_max_cps_maximum, "%d CPS").display_minimum(5).display_maximum(40),
+                setting::integer("cps", {"Legacy CPS"}, &model::legacy_cps, modules::catalog::fast_exp_cps_minimum, modules::catalog::fast_exp_cps_maximum).hidden(),
             };
             return fields;
         }

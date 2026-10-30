@@ -12,8 +12,8 @@ namespace trigger_engine
         static constexpr label weapons[]{{"Any Weapon"},{"Sword"},{"Axe"}};
         static constexpr label criticals[]{{"Off"},{"Smart"},{"Criticals Only"}};
         static const d fields[]{
-            d::real_pair("cooldown", {"Cooldown"}, &config::cooldown, .5f, 1.f, "%.0f%%").scaled(100.f),
-            d::integer_pair("reaction", {"Reaction"}, &config::reaction, 0, 150, "%d ms"),
+            d::real_pair("cooldown", {"Cooldown"}, &config::cooldown, modules::catalog::triggerbot_cooldown_minimum, modules::catalog::triggerbot_cooldown_maximum, "%.0f%%").scaled(100.f),
+            d::integer_pair("reaction", {"Reaction"}, &config::reaction, modules::catalog::triggerbot_reaction_minimum, modules::catalog::triggerbot_reaction_maximum, "%d ms"),
             d::enumeration<&config::targets>("targets", {"Targets"}, targets),
             d::enumeration<&config::weapon>("weapon", {"Starting Weapon"}, weapons),
             d::enumeration<&config::criticals>("criticals", {"Criticals"}, criticals),

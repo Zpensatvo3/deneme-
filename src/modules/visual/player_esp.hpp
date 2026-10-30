@@ -44,10 +44,7 @@ class player_esp : public module
 		}
 		static std::uintptr_t local_skin_texture_id();
 		static void refresh_local_skin_texture();
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::player_esp::schema()); }
-
 	private:
-        modules::settings::store<module_settings::player_esp> settings_;
+modules::settings::store<module_settings::player_esp> settings_{"player_esp"};
 	};
 }

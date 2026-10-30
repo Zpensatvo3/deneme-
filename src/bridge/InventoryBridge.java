@@ -288,15 +288,20 @@ public final class InventoryBridge {
     }
     private void mouseClick(Object interaction, Object p, int sync, int slot, int button, Object action)
             throws ReflectiveOperationException {
-        if (slot >= 0) safeClick(interaction, p, sync, slot, button, action);
+        if (slot >= 0 && ManagerBridge.current("mouse_tweaks", mouseManagerGeneration)) safeClick(interaction, p, sync, slot, button, action);
     }
     /** Called once per rendered frame; all gesture decisions and slot reads stay Java-side. */
-    public void tickMouse(boolean active, boolean rightTweak, boolean leftWithItem, boolean leftWithoutItem)
+    private long mouseManagerGeneration = -1;
+    public void tickMouse()
             throws ReflectiveOperationException {
-        if (!active || stopped) { resetMouse(); return; }
+        var state = ManagerBridge.state().module("mouse_tweaks");
+        if (!state.enabled() || stopped) { resetMouse(); return; }
+        boolean rightTweak = ManagerBridge.flag(state,"right_click_tweak"), leftWithItem = ManagerBridge.flag(state,"left_click_with_item"),
+            leftWithoutItem = ManagerBridge.flag(state,"left_click_without_item");
         prepare(MOUSE);
         Object c = client();
         if (c == null) { resetMouse(); return; }
+        if (mouseManagerGeneration != state.generation()) { resetMouse(); mouseManagerGeneration = state.generation(); }
         Object p = player.get(c), w = world.get(c), s = screen.get(c), m = manager.get(c);
         if (p == null || w == null || m == null || !(boolean) alive.invoke(p) || !handled.isInstance(s)) {
             resetMouse(); return;

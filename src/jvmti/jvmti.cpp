@@ -64,10 +64,3 @@ std::string jvmti::get_class_signature(const maps::Class& klass)
 
 	return signature;
 }
-
-maps::ClassLoader jvmti::get_class_ClassLoader(const maps::Class& klass)
-{
-	jobject classLoader = nullptr;
-	jvmti_env->GetClassLoader(klass, &classLoader);
-	return maps::ClassLoader(classLoader);
-}

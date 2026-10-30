@@ -32,14 +32,5 @@ namespace Vape::Math {
 
             return {wrapDegrees(yaw), std::clamp(pitch, -90.0f, 90.0f)};
         }
-
-        // Minecraft's mouse sensitivity GCD quantizer (Anti-cheat bypass: prevents impossible angle deltas)
-        static float applySensitivityGCD(float currentAngle, float targetAngle, float sensitivity) {
-            float f = sensitivity * 0.6f + 0.2f;
-            float gcd = f * f * f * 1.2f;
-            float delta = targetAngle - currentAngle;
-            delta = std::round(delta / gcd) * gcd;
-            return currentAngle + delta;
-        }
     };
 }

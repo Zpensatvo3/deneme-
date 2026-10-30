@@ -6,9 +6,9 @@ namespace blatant_aim_engine
     enum class aim_point { body = 1, random = 3, adaptive = 4 };
     struct config
     {
-        float fov = 60.f, max_distance = 4.5f, strength = .30f;
-        aim_point point = aim_point::body;
-        bool only_weapon = false, last_target = false;
+        float fov = modules::catalog::blatant_click_aim_assist_fov_default, max_distance = modules::catalog::blatant_click_aim_assist_max_distance_default, strength = modules::catalog::blatant_click_aim_assist_strength_default;
+        aim_point point = static_cast<aim_point>(modules::catalog::blatant_click_aim_assist_aim_point_default);
+        bool only_weapon = modules::catalog::blatant_click_aim_assist_only_weapon_default, last_target = modules::catalog::blatant_click_aim_assist_last_target_default;
         bool operator==(const config&) const = default;
     };
     inline std::span<const modules::settings::descriptor<config>> schema()
@@ -18,9 +18,9 @@ namespace blatant_aim_engine
         static constexpr label points[]{{"Body"},{"Random"},{"Adaptive"}};
         static constexpr int values[]{1,3,4};
         static const d fields[]{
-            d::number("fov", {"FOV"}, &config::fov, 10.f, 180.f, "%.0f deg"),
-            d::number("max_distance", {"Max Distance"}, &config::max_distance, 1.f, 6.f, "%.1f blocks"),
-            d::number("strength", {"Strength"}, &config::strength, .05f, 1.f, "%.2f"),
+            d::number("fov", {"FOV"}, &config::fov, modules::catalog::blatant_click_aim_assist_fov_minimum, modules::catalog::blatant_click_aim_assist_fov_maximum, "%.0f deg"),
+            d::number("max_distance", {"Max Distance"}, &config::max_distance, modules::catalog::blatant_click_aim_assist_max_distance_minimum, modules::catalog::blatant_click_aim_assist_max_distance_maximum, "%.1f blocks"),
+            d::number("strength", {"Strength"}, &config::strength, modules::catalog::blatant_click_aim_assist_strength_minimum, modules::catalog::blatant_click_aim_assist_strength_maximum, "%.2f"),
             d::toggle("only_weapon", {"Only Weapon"}, &config::only_weapon),
             d::toggle("last_target", {"Last Target"}, &config::last_target),
             d::enumeration<&config::point>("aim_point", {"Aim Point"}, points, values)

@@ -4,10 +4,10 @@ namespace module_settings
 {
     struct hit_particles
     {
-        int style = 0, count = 14;
-        float lifetime = .65f, size = 1.f, opacity = .9f;
-        bool theme_color = true, glow = true;
-        float color[4]{.65f,.4f,1.f,1.f};
+        int style = modules::catalog::hit_particles_style_default, count = modules::catalog::hit_particles_count_default;
+        float lifetime = modules::catalog::hit_particles_lifetime_default, size = modules::catalog::hit_particles_size_default, opacity = modules::catalog::hit_particles_opacity_default;
+        bool theme_color = modules::catalog::hit_particles_theme_color_default, glow = modules::catalog::hit_particles_glow_default;
+        float color[4]{modules::catalog::hit_particles_color_default[0], modules::catalog::hit_particles_color_default[1], modules::catalog::hit_particles_color_default[2], modules::catalog::hit_particles_color_default[3]};
         bool operator==(const hit_particles&) const = default;
         static std::span<const modules::settings::descriptor<hit_particles>> schema()
         {
@@ -15,10 +15,10 @@ namespace module_settings
             static constexpr modules::settings::label styles[]{{"Stars"},{"Sparks"},{"Rings"}};
             static const d fields[]{
                 d::choice("style",{"Style"},&hit_particles::style,styles),
-                d::integer("count",{"Particles"},&hit_particles::count,4,24),
-                d::number("lifetime",{"Lifetime"},&hit_particles::lifetime,.2f,1.5f,"%.2f s"),
-                d::number("size",{"Size"},&hit_particles::size,.5f,2.f,"%.2fx"),
-                d::number("opacity",{"Opacity"},&hit_particles::opacity,.1f,1.f,"%.2f"),
+                d::integer("count",{"Particles"},&hit_particles::count,modules::catalog::hit_particles_count_minimum,modules::catalog::hit_particles_count_maximum),
+                d::number("lifetime",{"Lifetime"},&hit_particles::lifetime,modules::catalog::hit_particles_lifetime_minimum,modules::catalog::hit_particles_lifetime_maximum,"%.2f s"),
+                d::number("size",{"Size"},&hit_particles::size,modules::catalog::hit_particles_size_minimum,modules::catalog::hit_particles_size_maximum,"%.2fx"),
+                d::number("opacity",{"Opacity"},&hit_particles::opacity,modules::catalog::hit_particles_opacity_minimum,modules::catalog::hit_particles_opacity_maximum,"%.2f"),
                 d::toggle("theme_color",{"Theme Color"},&hit_particles::theme_color),
                 d::color("color",{"Color"},&hit_particles::color).when([](const hit_particles& c){return !c.theme_color;}),
                 d::toggle("glow",{"Glow"},&hit_particles::glow)

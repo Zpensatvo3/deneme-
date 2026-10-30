@@ -38,10 +38,10 @@ namespace modules::config_json
     class parser
     {
     public:
-        explicit parser(std::string_view input) : input_(input) {}
+        explicit parser(std::string_view input, std::size_t maximum_bytes = 96 * 1024) : input_(input), maximum_bytes_(maximum_bytes) {}
         std::optional<value> parse()
         {
-            if (input_.empty() || input_.size() > 96 * 1024) return std::nullopt;
+            if (input_.empty() || input_.size() > maximum_bytes_) return std::nullopt;
             value result;
             if (!read(result, 0)) return std::nullopt;
             spaces();
@@ -50,6 +50,7 @@ namespace modules::config_json
         }
     private:
         std::string_view input_;
+        std::size_t maximum_bytes_;
         std::size_t position_ = 0, nodes_ = 0;
         void spaces()
         {
@@ -210,6 +211,7 @@ namespace modules::config_json
     };
 
     inline std::optional<value> parse(std::string_view input) { return parser(input).parse(); }
+    inline std::optional<value> protocol(std::string_view input) { return parser(input, 6 * 96 * 1024 + 4096).parse(); }
     inline std::string escape(std::string_view input)
     {
         std::string output;

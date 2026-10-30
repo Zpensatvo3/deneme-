@@ -29,7 +29,13 @@ namespace modules
     void synchronize_lifecycle(Module& entry, Context& context)
     {
         const bool requested = entry.enabled;
-        if (requested == entry.prev_enabled) return;
+        bool reset = false;
+        if constexpr (requires { entry.get_generation(); entry.prev_generation; }) {
+            const auto generation = entry.get_generation();
+            reset = entry.prev_generation != generation;
+            entry.prev_generation = generation;
+        }
+        if (requested == entry.prev_enabled && !reset) return;
         entry.prev_enabled = requested;
         if (requested) entry.on_enable(context);
         else entry.on_disable(context);
@@ -48,7 +54,10 @@ namespace modules
     void tick_module(Module& entry, Context& context)
     {
         synchronize_lifecycle(entry, context);
-        if (entry.enabled) entry.run(context);
+        if (entry.enabled) {
+            if constexpr (requires { entry.run_managed(context); }) entry.run_managed(context);
+            else entry.run(context);
+        }
         // One-shot modules may disable themselves from run/on_enable.
         synchronize_lifecycle(entry, context);
     }

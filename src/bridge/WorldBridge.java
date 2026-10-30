@@ -204,10 +204,7 @@ public class WorldBridge {
     private volatile boolean triggerActive;
     private volatile long triggerLastConfigTime;
     private volatile long triggerGenerationArg, triggerManualArg;
-    private volatile float triggerLowArg = .9f, triggerHighArg = 1.f;
-    private volatile int triggerReactionLowArg, triggerReactionHighArg;
-    private volatile int triggerTargetsArg, triggerWeaponArg, triggerCriticalsArg;
-    private volatile boolean triggerOnClickArg, triggerSwingHandArg, triggerClickSimulationArg;
+    private long triggerManagerGeneration = -1, jumpManagerGeneration = -1, totemManagerGeneration = -1;
 
     private void prepareTrigger() throws ReflectiveOperationException {
         Class<?> entity = load("class_1297"), inv = load("class_1661"), stack = load("class_1799");
@@ -308,10 +305,7 @@ public class WorldBridge {
             return;
         }
         try {
-            executeTrigger(c, triggerGenerationArg, triggerManualArg,
-                triggerLowArg, triggerHighArg, triggerReactionLowArg, triggerReactionHighArg,
-                triggerTargetsArg, triggerWeaponArg, triggerCriticalsArg,
-                triggerOnClickArg, triggerSwingHandArg, triggerClickSimulationArg);
+            executeTrigger(c, triggerGenerationArg, triggerManualArg);
         } catch (Throwable t) {
             triggerFailed = true;
             try { cancelTrigger(); } catch (Throwable cleanup) { t.addSuppressed(cleanup); }
@@ -346,7 +340,7 @@ public class WorldBridge {
         // Only notify the game's mouse callback after the single direct attack.
         // A synchronous pulse has no delayed UP and no worker outliving disable.
         if (client() != c || !live(c, p, w) || player.get(c) != p || world.get(c) != w ||
-            triggerService(8, p, w, null, 0, generation) != manual) return;
+            triggerService(8, p, w, null, 0, generation) != manual || !ManagerBridge.current("triggerbot", triggerManagerGeneration)) return;
         Object mouse = triggerMouse.get(c), window = triggerGetWindow.invoke(c);
         long handle = window == null ? 0 : (long) triggerGetHandle.invoke(window);
         Object registry = triggerBindings.get(null);
@@ -372,7 +366,7 @@ public class WorldBridge {
             try {
                 sameSession = client() == c && player.get(c) == p && world.get(c) == w && screen.get(c) == null &&
                     triggerGetWindow.invoke(c) == window && (long) triggerGetHandle.invoke(window) == handle &&
-                    triggerService(8, p, w, null, 0, generation) == manual;
+                    triggerService(8, p, w, null, 0, generation) == manual && ManagerBridge.current("triggerbot", triggerManagerGeneration);
             } catch (ReflectiveOperationException failure) { if (error == null) error = failure; else error.addSuppressed(failure); }
             // Restore every left-mouse binding, including a rebound use key or
             // modded binding. Preserve pre-existing queued manual presses; do
@@ -452,39 +446,30 @@ public class WorldBridge {
         triggerSlot = triggerPreparedSlot = triggerPreparationTicks = triggerLastTicks = -1; triggerLastCooldown = 0; triggerCritical = -1;
         triggerReady = 0;
     }
-    public void tickTrigger(boolean active, long generation, long manual,
-        float low, float high, int reactionLow, int reactionHigh, int targets, int weapon, int criticals, boolean onClick, boolean swingHand, boolean clickSimulation)
+    public void tickTrigger(long generation, long manual)
         throws ReflectiveOperationException {
         Object c = client(); if (c == null) return;
-        if (!active) { cancelTrigger(); return; }
+        if (!ManagerBridge.state().module("triggerbot").enabled()) { cancelTrigger(); return; }
         if (triggerFailed) return;
-        if (!Float.isFinite(low) || !Float.isFinite(high) || low < .5f || high > 1.f || low > high ||
-            reactionLow < 0 || reactionHigh > 150 || reactionLow > reactionHigh || targets < 0 || targets > 2 ||
-            weapon < 0 || weapon > 2 || criticals < 0 || criticals > 2) { cancelTrigger(); return; }
         prepare(4);
         triggerActive = true;
         triggerLastConfigTime = System.nanoTime();
         triggerGenerationArg = generation;
         triggerManualArg = manual;
-        triggerLowArg = low;
-        triggerHighArg = high;
-        triggerReactionLowArg = reactionLow;
-        triggerReactionHighArg = reactionHigh;
-        triggerTargetsArg = targets;
-        triggerWeaponArg = weapon;
-        triggerCriticalsArg = criticals;
-        triggerOnClickArg = onClick;
-        triggerSwingHandArg = swingHand;
-        triggerClickSimulationArg = clickSimulation;
         if (!triggerTickHooked) {
-            executeTrigger(c, generation, manual, low, high, reactionLow, reactionHigh,
-                targets, weapon, criticals, onClick, swingHand, clickSimulation);
+            executeTrigger(c, generation, manual);
         }
     }
 
-    private void executeTrigger(Object c, long generation, long manual,
-        float low, float high, int reactionLow, int reactionHigh, int targets, int weapon, int criticals,
-        boolean onClick, boolean swingHand, boolean clickSimulation) throws ReflectiveOperationException {
+    private void executeTrigger(Object c, long generation, long manual) throws ReflectiveOperationException {
+        var state = ManagerBridge.state().module("triggerbot");
+        if (!state.enabled()) { cancelTrigger(); return; }
+        if (triggerManagerGeneration != state.generation()) { cancelTrigger(); triggerManagerGeneration = state.generation(); triggerActive = true; }
+        var cooldown = Json.array(state.settings().get("cooldown")); var reaction = Json.array(state.settings().get("reaction"));
+        float low = ManagerBridge.decimal(cooldown.get(0)), high = ManagerBridge.decimal(cooldown.get(1));
+        int reactionLow = Json.integer(reaction.get(0)), reactionHigh = Json.integer(reaction.get(1));
+        int targets = ManagerBridge.integer(state, "targets"), weapon = ManagerBridge.integer(state, "weapon"), criticals = ManagerBridge.integer(state, "criticals");
+        boolean onClick = ManagerBridge.flag(state, "on_click"), swingHand = ManagerBridge.flag(state, "swing_hand"), clickSimulation = ManagerBridge.flag(state, "click_simulation");
         final long now = System.nanoTime();
         try {
             if (onClick && !triggerLeftDown(c)) { cancelTrigger(); return; }
@@ -552,7 +537,7 @@ public class WorldBridge {
                 triggerInventory.invoke(p) != inv || triggerSelected.getInt(inv) != triggerSlot ||
                 !triggerEligible(c, p, w, m, e, targets) ||
                 !Float.isFinite(finalCooldown) || finalCooldown > 1.f || finalCooldown < triggerThreshold ||
-                triggerService(8, p, w, e, 0, generation) != manual ||
+                triggerService(8, p, w, e, 0, generation) != manual || !ManagerBridge.current("triggerbot", state.generation()) ||
                 (onClick && !triggerLeftDown(c)) ||
                 (triggerShield(p, e) && !triggerAxe(triggerStack.invoke(inv, triggerSlot)))) { cancelTrigger(); return; }
             // Reserve the next cycle before a mutating call: an exception may
@@ -714,10 +699,14 @@ public class WorldBridge {
             jumpLastGrounded = jumpDamageAt = -1; jumpAwaitingSource = false;
         }
     }
-    public void tickJump(boolean active, long generation, int mode, int chance, int delay, boolean onlyCombat)
+    public void tickJump(long generation)
         throws ReflectiveOperationException {
         Object c = client(); if (c == null) return;
-        if (!active) { cancelJump(); return; }
+        var state = ManagerBridge.state().module("jump_reset");
+        if (!state.enabled()) { cancelJump(); return; }
+        if (jumpManagerGeneration != state.generation()) { cancelJump(); jumpManagerGeneration = state.generation(); }
+        int mode = ManagerBridge.integer(state, "mode"), chance = ManagerBridge.integer(state, "chance"), delay = ManagerBridge.integer(state, "jump_delay_ms");
+        boolean onlyCombat = ManagerBridge.flag(state, "only_combat");
         prepare(5);
         try {
             if (jumpFailed || mode < 0 || mode > 1 || chance < 0 || chance > 100 || delay < 0 || delay > 100 ||
@@ -784,7 +773,7 @@ public class WorldBridge {
             if (client() != c || player.get(c) != p || world.get(c) != w || options.get(c) != opts ||
                 jumpKey.get(opts) != key || jumpBound.get(key) != input || !jumpPlayable(c, p, w) ||
                 !(boolean) jumpGround.invoke(p) || jumpCooldown.getInt(p) != 0 || jumpWindow(c) != handle || jumpPhysical(input, handle) ||
-                (boolean) jumpPressed.invoke(key) || !jumpPermitted(generation)) {
+                (boolean) jumpPressed.invoke(key) || !jumpPermitted(generation) || !ManagerBridge.current("jump_reset", state.generation())) {
                 jumpPending = false; return;
             }
             jumpPending = false; jumpHolding = true; jumpSentAge = age;
@@ -822,8 +811,6 @@ public class WorldBridge {
     private volatile boolean totemActive;
     private boolean totemFailed;
     private long totemGeneration;
-    private int[] totemValues;
-    private boolean totemAutoOpen;
     private final java.util.Random totemRandom=new java.util.Random();
 
     private void prepareTotem() throws ReflectiveOperationException {
@@ -881,16 +868,16 @@ public class WorldBridge {
         Object s=screen.get(c);
         if (player.get(c)!=p || world.get(c)!=totemWorld || manager.get(c)!=totemManager ||
             totemInventory.invoke(p)!=inv || totemHandler.get(p)!=h || !totemScreenType.isInstance(s) ||
-            totemScreenHandler.get(s)!=h || !totemIs(totemStack.invoke(inv,source)) || !totemPermitted(totemGeneration)) return;
+            totemScreenHandler.get(s)!=h || !totemIs(totemStack.invoke(inv,source)) || !totemPermitted(totemGeneration) ||
+            !ManagerBridge.current("auto_totem",totemManagerGeneration)) return;
         totemClick.invoke(manager.get(c),sync,source,destination,totemSwap,p);
     }
     /** Argon AutoInventoryTotem settings: mode, delay ticks, hotbar, slot, auto switch, force, stay-open ticks. */
-    public void tickTotem(boolean active,long generation,int[] values,boolean autoOpen) throws ReflectiveOperationException {
-        if (!active || stopped) { cancelTotem(); return; }
-        if (values==null || values.length!=7 || values[0]<0 || values[0]>1) throw new IllegalArgumentException("Auto Totem settings");
+    public void tickTotem(long generation) throws ReflectiveOperationException {
+        if (!ManagerBridge.state().module("auto_totem").enabled() || stopped) { cancelTotem(); return; }
         prepare(7);
         if (client()==null) return;
-        totemGeneration=generation; totemValues=values.clone(); totemAutoOpen=autoOpen;
+        totemGeneration=generation;
         if (tickEvents==null) throw new IllegalStateException("Auto Totem requires tick hooks");
         totemActive=!totemFailed && totemPermitted(generation);
     }
@@ -901,7 +888,13 @@ public class WorldBridge {
     }
     private void runTotemTick(Object c) throws ReflectiveOperationException {
         if (c==null || client()!=c) return;
-        int[] values=totemValues; boolean autoOpen=totemAutoOpen; long generation=totemGeneration;
+        var state = ManagerBridge.state().module("auto_totem");
+        if (!state.enabled()) { cancelTotem(); return; }
+        if (totemManagerGeneration != state.generation()) { cancelTotem(); totemManagerGeneration = state.generation(); totemActive = true; }
+        int[] values={ManagerBridge.integer(state,"mode"),ManagerBridge.integer(state,"delay"),ManagerBridge.flag(state,"hotbar")?1:0,
+            ManagerBridge.integer(state,"totem_slot"),ManagerBridge.flag(state,"auto_switch")?1:0,ManagerBridge.flag(state,"force_totem")?1:0,
+            ManagerBridge.integer(state,"stay_open_for")};
+        boolean autoOpen=ManagerBridge.flag(state,"auto_open"); long generation=totemGeneration;
         Object p=player.get(c),w=world.get(c),m=manager.get(c);
         if (p==null || w==null || m==null || !(boolean)alive.invoke(p) || !totemPermitted(generation)) { cancelTotem(); return; }
         Object inv=totemInventory.invoke(p),s=screen.get(c),h=totemHandler.get(p);
@@ -919,7 +912,7 @@ public class WorldBridge {
         boolean shouldOpen=(hotbar ? (!offhand || !desiredHotbar) : !offhand) && !screenIsOwned && totemHasOutside(inv);
         if (autoOpen && shouldOpen) {
             Object fake=totemScreenCtor.newInstance(p);
-            if (!totemPermitted(generation)) return;
+            if (!totemPermitted(generation) || !ManagerBridge.current("auto_totem",state.generation())) return;
             totemSetScreen.invoke(c,fake);
             if (screen.get(c)==fake) {
                 totemOpenedScreen=fake;
@@ -934,6 +927,7 @@ public class WorldBridge {
         if (totemClock==-1) totemClock=delay;
         if (totemCloseClock==-1) totemCloseClock=stay;
         if (totemClock>0) totemClock--;
+        if (!ManagerBridge.current("auto_totem",state.generation())) return;
         if (values[4]!=0) totemSelected.setInt(inv,desired);
         h=totemHandler.get(p);
         if (h==null) return;
@@ -957,7 +951,7 @@ public class WorldBridge {
             boolean close=screenIsOwned && (hotbar ? totemIs(totemStack.invoke(inv,desired)) && totemIs(totemOffhand.invoke(p)) : totemIs(totemOffhand.invoke(p)));
             if (close && autoOpen) {
                 if (totemCloseClock!=0) { totemCloseClock--; return; }
-                if (screen.get(c)==s && totemPermitted(generation)) totemClose.invoke(s);
+                if (screen.get(c)==s && totemPermitted(generation) && ManagerBridge.current("auto_totem",state.generation())) totemClose.invoke(s);
                 totemOpenedScreen=null; totemCloseClock=stay;
             }
         }

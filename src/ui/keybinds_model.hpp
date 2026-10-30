@@ -50,10 +50,10 @@ namespace gui::keybinds_model
     }
     inline bool assign(modules::module& entry, int key) {
         if (!visible(&entry) || !platform::keys::assignable(key)) return false;
-        entry.set_keybind(key); return true;
+        return entry.set_keybind(key).success;
     }
     inline bool clear(modules::module& entry) {
         if (!visible(&entry)) return false;
-        entry.set_keybind(0); return true;
+        return entry.set_keybind(0).success;
     }
 }

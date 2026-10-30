@@ -48,7 +48,6 @@ static_assert(std::string_view(maps::Block::get_name()) == "net/minecraft/class_
 static_assert(std::string_view(maps::Blocks::get_name()) == "net/minecraft/class_2246");
 static_assert(std::string_view(maps::BlockState::get_name()) == "net/minecraft/class_2680");
 static_assert(std::string_view(maps::World::get_name()) == "net/minecraft/class_1937");
-static_assert(std::string_view(maps::WorldProperties::get_name()) == "net/minecraft/class_638$class_5271");
 static_assert(std::string_view(maps::Direction::get_name()) == "net/minecraft/class_2350");
 static_assert(std::string_view(maps::Packet::get_name()) == "net/minecraft/class_2596");
 static_assert(std::string_view(maps::GameProfile::get_name()) == "com/mojang/authlib/GameProfile");

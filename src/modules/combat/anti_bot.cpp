@@ -5,7 +5,6 @@
 
 modules::anti_bot::anti_bot() : module("anti bot", "Client", "anti_bot")
 {
-    enabled = module_settings::anti_bot_default_enabled;
     services::anti_bot::configure(enabled, settings_.read());
 }
 modules::anti_bot::~anti_bot() { services::anti_bot::configure(false, settings_.read()); }

@@ -25,7 +25,7 @@ public final class AutoTotemBridgeTest {
     }
     static void totem(class_310 c,int index) { c.field_1724.inventory.stacks[index]=new class_1799(class_1802.field_8288); }
     static boolean is(class_1799 s) { return s.item==class_1802.field_8288; }
-    static void arm(Bridge b,boolean auto) throws Exception { b.tickTotem(true,1,values,auto); }
+    static void arm(Bridge b,boolean auto) throws Exception { net.onestep.hybrid.ManagerTestDriver.totem(b,true,1,values,auto); }
     static void tick() { ClientTickRelay.onTick(class_310.field_1700); }
     static String[] bindings() throws Exception {
         var match=Pattern.compile("\\{\"((?:net/minecraft/class_|field_|method_)[^\"]+)\", ").matcher(Files.readString(Path.of("src/services/game/world_bridge.cpp")));
@@ -76,7 +76,7 @@ public final class AutoTotemBridgeTest {
         check(picked.equals(Set.of(12,25)),"Random samples only eligible sources");
         c=setup(true); totem(c,9); b=new Bridge(); b.allowed=false; arm(b,false); tick();
         check(c.field_1761.clicks==0,"permission blocks queued tick");
-        c=setup(true); totem(c,9); b=new Bridge(); arm(b,false); b.tickTotem(false,2,values,false); tick();
+        c=setup(true); totem(c,9); b=new Bridge(); arm(b,false); net.onestep.hybrid.ManagerTestDriver.totem(b,false,2,values,false); tick();
         check(c.field_1761.clicks==0,"disable removes queued work");
         c=setup(true); totem(c,9); b=new Bridge(); arm(b,false); c.thread=false; tick();
         check(c.field_1761.clicks==0,"wrong thread cannot swap");

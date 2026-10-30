@@ -68,8 +68,4 @@ namespace gui::config_page::model
         target[size] = '\0';
     }
 
-    inline std::string date(std::string_view value)
-    {
-        return value.empty() ? "--" : std::string(value.substr(0, std::min<std::size_t>(10, value.size())));
-    }
 }

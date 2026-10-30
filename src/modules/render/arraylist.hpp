@@ -10,7 +10,7 @@ namespace modules
 	class arraylist : public module
 	{
 	public:
-		arraylist() : module("arraylist", "Visual") { enabled = true; } // enable by default
+		arraylist() : module("arraylist", "Visual") {}
 
 		// Screen rectangle the overlay actually occupies. The HUD editor uses it as
 		// its drag handle so the preview and the real overlay can never drift apart.
@@ -38,15 +38,5 @@ namespace modules
 		// Six controls: scale, background opacity, bar width, bar glow, text shadow
 		// and the keybind badge.
 		float get_options_height() override { return 270.0f; }
-		void visit_config(config_visitor& v) override
-		{
-            modules::settings::visit(v, gui::arraylist_settings, module_settings::arraylist::schema());
-}
-
-		inline static bool& bar_glow = gui::arraylist_settings.bar_glow;
-		inline static bool& text_shadow = gui::arraylist_settings.text_shadow;
-		inline static bool& show_keybinds = gui::arraylist_settings.show_keybinds;
-		inline static float& bg_opacity = gui::arraylist_settings.bg_opacity;
-		inline static float& bar_width = gui::arraylist_settings.bar_width;
 	};
 }

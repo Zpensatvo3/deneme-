@@ -13,32 +13,12 @@ namespace Vape::Math {
         constexpr Vector3 operator+(const Vector3& o) const { return {x + o.x, y + o.y, z + o.z}; }
         constexpr Vector3 operator-(const Vector3& o) const { return {x - o.x, y - o.y, z - o.z}; }
         constexpr Vector3 operator*(double s) const { return {x * s, y * s, z * s}; }
-        constexpr Vector3 operator/(double s) const { return {x / s, y / s, z / s}; }
 
         [[nodiscard]] double distanceTo(const Vector3& o) const {
             double dx = x - o.x;
             double dy = y - o.y;
             double dz = z - o.z;
             return std::sqrt(dx * dx + dy * dy + dz * dz);
-        }
-
-        [[nodiscard]] double horizontalDistanceTo(const Vector3& o) const {
-            double dx = x - o.x;
-            double dz = z - o.z;
-            return std::sqrt(dx * dx + dz * dz);
-        }
-
-        [[nodiscard]] double length() const {
-            return std::sqrt(x * x + y * y + z * z);
-        }
-
-        [[nodiscard]] double lengthSquared() const {
-            return x * x + y * y + z * z;
-        }
-
-        [[nodiscard]] Vector3 normalize() const {
-            double len = length();
-            return len > 0.0 ? *this / len : Vector3{};
         }
     };
 
@@ -59,10 +39,6 @@ namespace Vape::Math {
                 std::clamp(eyePos.y, min.y, max.y),
                 std::clamp(eyePos.z, min.z, max.z)
             };
-        }
-
-        [[nodiscard]] BoundingBox expand(double d) const {
-            return {min - Vector3{d, d, d}, max + Vector3{d, d, d}};
         }
     };
 

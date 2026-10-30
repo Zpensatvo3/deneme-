@@ -27,8 +27,8 @@ public final class JumpResetBridgeTest {
         GLFW.reset(); class_310 c = new class_310(); class_310.field_1700 = c; return c;
     }
     private static PlatformBridge bridge() throws Exception { PlatformBridge b = new PlatformBridge(); tick(b); return b; }
-    private static void tick(PlatformBridge b) throws Exception { b.tickJump(true, 1, 0, 100, 0, true); }
-    private static void tick(PlatformBridge b, int mode) throws Exception { b.tickJump(true, 1, mode, 100, 0, true); }
+    private static void tick(PlatformBridge b) throws Exception { net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 0, true); }
+    private static void tick(PlatformBridge b, int mode) throws Exception { net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, mode, 100, 0, true); }
     private static void hit(class_310 c) { c.field_1724.field_6235 = 10; c.field_1724.source = new class_1282(new class_1309()); }
     private static String[] bindings() throws Exception {
         String cpp = Files.readString(Path.of("src/services/game/world_bridge.cpp"));
@@ -46,14 +46,14 @@ public final class JumpResetBridgeTest {
         c.field_1724.field_6235 = 9; tick(b); hit(c); tick(b); check(c.field_1690.field_1903.pressed, "next rising hurt edge can activate");
 
         c = setup(); hit(c); b = bridge(); check(!c.field_1690.field_1903.pressed, "enable mid-hit only seeds history");
-        c = setup(); b = bridge(); hit(c); b.tickJump(true, 2, 0, 100, 0, true);
+        c = setup(); b = bridge(); hit(c); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 2, 0, 100, 0, true);
         check(!c.field_1690.field_1903.pressed, "generation changes cannot replay an old hit");
-        c = setup(); b = bridge(); b.tickJump(true, 1, 0, 0, 0, true); hit(c); b.tickJump(true, 1, 0, 0, 0, true);
+        c = setup(); b = bridge(); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 0, 0, true); hit(c); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 0, 0, true);
         check(!c.field_1690.field_1903.pressed, "zero chance disables activation");
-        c = setup(); b = bridge(); b.tickJump(true, 1, 0, 100, 100, true); hit(c); b.tickJump(true, 1, 0, 100, 100, true);
-        time(b, "jumpReadyAt", Long.MAX_VALUE); b.tickJump(true, 1, 0, 100, 100, true);
+        c = setup(); b = bridge(); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 100, true); hit(c); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 100, true);
+        time(b, "jumpReadyAt", Long.MAX_VALUE); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 100, true);
         check(!c.field_1690.field_1903.pressed && flag(b, "jumpPending"), "delay holds pending decision");
-        time(b, "jumpReadyAt", 0); b.tickJump(true, 1, 0, 100, 100, true);
+        time(b, "jumpReadyAt", 0); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 100, true);
         check(c.field_1690.field_1903.pressed, "configured delay can complete");
 
         c = setup(); b = bridge(); c.field_1724.field_6235 = 10; tick(b);
@@ -69,8 +69,8 @@ public final class JumpResetBridgeTest {
         check(!c.field_1690.field_1903.pressed, "self damage is not a living attack");
         c = setup(); b = bridge(); c.field_1724.field_6235 = 10; c.field_1724.source = new class_1282(new class_1297()); tick(b);
         check(!c.field_1690.field_1903.pressed, "nonliving source does not pass living-only filter");
-        c = setup(); b = bridge(); b.tickJump(true, 1, 0, 100, 0, false); c.field_1724.field_6235 = 10;
-        b.tickJump(true, 1, 0, 100, 0, false); check(c.field_1690.field_1903.pressed, "combat-only off permits environmental damage");
+        c = setup(); b = bridge(); net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 0, false); c.field_1724.field_6235 = 10;
+        net.onestep.hybrid.ManagerTestDriver.jump(b,true, 1, 0, 100, 0, false); check(c.field_1690.field_1903.pressed, "combat-only off permits environmental damage");
         c = setup(); b = bridge(); hit(c); c.field_1724.grounded = false; tick(b);
         check(!c.field_1690.field_1903.pressed, "ground grace never authorizes an airborne press");
         time(b, "jumpExpiresAt", 0); c.field_1724.grounded = true; tick(b);
@@ -99,7 +99,7 @@ public final class JumpResetBridgeTest {
         check(!c.field_1690.field_1903.pressed, "real jump is never adopted");
         c = setup(); b = bridge(); hit(c); tick(b); GLFW.keys[32] = 1; b.cancelJump();
         check(c.field_1690.field_1903.pressed, "cleanup preserves physical hold");
-        c = setup(); b = bridge(); hit(c); tick(b); b.tickJump(false, 1, 0, 100, 0, true);
+        c = setup(); b = bridge(); hit(c); tick(b); net.onestep.hybrid.ManagerTestDriver.jump(b,false, 1, 0, 100, 0, true);
         check(!c.field_1690.field_1903.pressed, "disable releases owned binding");
         c = setup(); b = bridge(); hit(c); tick(b); b.allowed = false; tick(b);
         check(!c.field_1690.field_1903.pressed, "authorization/focus cancellation releases input");

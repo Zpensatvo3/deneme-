@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory(prefix="onestep-totem-") as work:
     classes = Path(work) / "classes"
     sources = [ROOT / "src/bridge" / (name + ".java") for name in ("WorldBridge", "ClientTickTransformer", "ClientTickRelay")]
     sources += sorted((ROOT / "tests/auto_totem").glob("*.java"))
-    subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-cp", args.asm_classpath,
+    subprocess.run([javac, *[str(ROOT / "src/bridge" / (name + ".java")) for name in ("Json", "ModuleCatalog", "ModuleManager", "ConfigManager", "ManagerBridge", "GameBridge", "UtilityBridge", "ItemBridge", "InventoryBridge", "WorldBridge", "ClientTickRelay")], str(ROOT / "tests/support/ManagerTestDriver.java"), "--release", "17", "-encoding", "UTF-8", "-g:none", "-cp", args.asm_classpath,
                     "-d", str(classes), *map(str, sources)], check=True)
     for mode, roots in (("source", (classes,)), ("embedded", (ROOT / "assets/hybrid", classes))):
         cp = os.pathsep.join((*map(str, roots), args.asm_classpath))

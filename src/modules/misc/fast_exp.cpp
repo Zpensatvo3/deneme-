@@ -7,8 +7,7 @@ void modules::fast_exp::run(::cache&) {}
 
 void modules::fast_exp::render_overlay()
 {
-    const auto settings = settings_.read();
-    services::game::items::update(enabled, settings.min_cps, settings.max_cps);
+    services::game::items::update(enabled);
 }
 
 void modules::fast_exp::render_options()

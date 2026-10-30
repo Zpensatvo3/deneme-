@@ -2,6 +2,7 @@
 
 #include "../module_support.hpp"
 #include "jump_reset_config.hpp"
+#include "../core/settings_store.hpp"
 
 namespace modules
 {
@@ -18,18 +19,11 @@ namespace modules
         void on_render_shutdown() override { cancel_on_client_thread(); }
         void render_options() override;
         float get_options_height() override { return 320.0f; }
-        void visit_config(config_visitor& v) override
-        {
-            auto candidate = settings_snapshot();
-            if (jump_reset_config::visit_config(v, candidate)) apply_settings(candidate, true);
-        }
-
     private:
-        jump_reset_config::config settings{};
-        std::mutex settings_mutex;
+        settings::store<jump_reset_config::config> settings{"jump_reset", jump_reset_config::schema()};
         std::atomic<std::uint64_t> reset_generation{1};
         jump_reset_config::config settings_snapshot();
-        void apply_settings(jump_reset_config::config candidate, bool force_reset = false);
+        void apply_settings(jump_reset_config::config candidate);
         void request_reset();
     };
 }

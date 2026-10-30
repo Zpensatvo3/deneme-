@@ -1,5 +1,4 @@
 #include "config_fields.hpp"
-#include "module.hpp"
 #include "config_json.hpp"
 
 #include <charconv>
@@ -10,6 +9,7 @@
 #include <optional>
 #include <sstream>
 #include <string_view>
+#include <type_traits>
 
 namespace
 {
@@ -266,31 +266,21 @@ namespace
     };
 }
 
-std::string modules::serialize_config_fields(module& owner)
+std::string modules::serialize_config_fields(const std::function<void(config_visitor&)>& visit)
 {
-    writer output;
-    owner.visit_config(output);
-    return output.finish();
+    writer output; visit(output); return output.finish();
 }
-
-bool modules::deserialize_config_fields(module& owner, const std::string& object)
+bool modules::validate_config_fields(const std::function<void(config_visitor&)>& visit, const std::string& object)
 {
-    if (!validate_config_fields(owner, object)) return false;
-    reader application(object, true);
-    owner.visit_config(application);
-    return application.valid();
+    reader input(object, false); visit(input); return input.valid();
 }
-
-bool modules::validate_config_fields(module& owner, const std::string& object)
+bool modules::deserialize_config_fields(const std::function<void(config_visitor&)>& visit, const std::string& object)
 {
-    reader validation(object, false);
-    owner.visit_config(validation);
-    return validation.valid();
+    if (!validate_config_fields(visit, object)) return false;
+    reader input(object, true); visit(input); return input.valid();
 }
-
-std::string modules::config_validation_error(module& owner, const std::string& object)
+std::string modules::config_validation_error(const std::function<void(config_visitor&)>& visit, const std::string& object)
 {
-    reader validation(object, false);
-    owner.visit_config(validation);
-    return validation.message().empty() ? "Invalid module settings." : validation.message();
+    reader input(object, false); visit(input);
+    return input.message().empty() ? "Invalid DTO settings." : input.message();
 }

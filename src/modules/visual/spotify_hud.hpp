@@ -25,7 +25,6 @@ namespace modules
 		float get_pos_y() const { const auto settings_snapshot = settings_.read(); return settings_snapshot.position_y; }
 		void set_pos_x(float x) { settings_.update([&](auto& c) { c.position_x = x; return true; }); }
 		void set_pos_y(float y) { settings_.update([&](auto& c) { c.position_y = y; return true; }); }
-		float get_scale() const { return fixed_scale; }
 
 		struct bounds
 		{
@@ -37,11 +36,8 @@ namespace modules
 		bounds get_bounds(float display_w, float display_h) const;
 		void render_hud_preview(ImDrawList* draw, float x, float y);
 
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::spotify_hud::schema()); }
-
 	private:
-        modules::settings::store<module_settings::spotify_hud> settings_;
+modules::settings::store<module_settings::spotify_hud> settings_{"spotify_hud"};
 
 		bool applied_lyrics = false;
 	};

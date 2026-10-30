@@ -190,7 +190,7 @@ using namespace vape_bridge;
 
 modules::vape_module::vape_module(vape_kind selected)
     : module(vape_bridge::name(selected), "Vape", vape_bridge::id(selected)),
-      settings(vape_settings::defaults(selected)), kind(selected)
+      settings(vape_bridge::id(selected), vape_settings::schema(selected)), kind(selected)
 {
 }
 modules::vape_module::~vape_module() = default;
@@ -226,8 +226,7 @@ void modules::vape_module::render_overlay()
         if (!camera || !camera.is_same_object(context.player) || platform::jni_context::clear_exception()) { state.reset(); return; }
         if (state && (!state->world.is_same_object(context.world) || !state->player.is_same_object(context.player) ||
             platform::jni_context::clear_exception())) state.reset();
-        options config;
-        { std::lock_guard lock(settings_mutex); config = settings; }
+        const auto config = settings.read();
         if (!state) {
             state = std::make_unique<runtime>(); state->world = context.world; state->player = context.player;
         }

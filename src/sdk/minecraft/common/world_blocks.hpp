@@ -181,10 +181,6 @@ namespace maps
 		jni::method<BlockHitResult, ONESTEP_MC_NAME("method_17742"), jni::NOT_STATIC, RaycastContext> raycast{ *this };
     END_KLASS_DEF()
 
-        BEGIN_KLASS_DEF(WorldProperties, ONESTEP_MC_NAME("net/minecraft/class_638$class_5271"))
-        jni::method<jlong, ONESTEP_MC_NAME("method_188")> getTime{ *this };
-    END_KLASS_DEF()
-
         BEGIN_KLASS_DEF(Direction, ONESTEP_MC_NAME("net/minecraft/class_2350"))
         jni::field<Direction, ONESTEP_MC_NAME("field_11033"), jni::STATIC> DOWN{ *this };
     jni::field<Direction, ONESTEP_MC_NAME("field_11036"), jni::STATIC> UP{ *this };

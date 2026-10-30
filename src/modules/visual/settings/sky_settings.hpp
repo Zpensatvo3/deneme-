@@ -5,13 +5,13 @@ namespace module_settings
 {
     struct sky
     {
-        int style = 0;
-        int mode = 1, panorama = 3;
-        float exposure = 0.f, rotation = 0.f;
-        bool drift = false;
-        float strength = .85f;
-        bool match_fog = true;
-        float color[4]{.65f,.38f,.95f,1.f};
+        int style = modules::catalog::sky_style_default;
+        int mode = modules::catalog::sky_mode_default, panorama = modules::catalog::sky_panorama_default;
+        float exposure = modules::catalog::sky_exposure_default, rotation = modules::catalog::sky_rotation_default;
+        bool drift = modules::catalog::sky_drift_default;
+        float strength = modules::catalog::sky_strength_default;
+        bool match_fog = modules::catalog::sky_match_fog_default;
+        float color[4]{modules::catalog::sky_color_default[0], modules::catalog::sky_color_default[1], modules::catalog::sky_color_default[2], modules::catalog::sky_color_default[3]};
         bool operator==(const sky&) const = default;
         static std::span<const modules::settings::descriptor<sky>> schema()
         {
@@ -28,11 +28,11 @@ namespace module_settings
             static const d fields[]{
                 d::choice("mode", {"Mode"}, &sky::mode, modes),
                 d::choice("panorama", {"Panorama"}, &sky::panorama, panoramas).when([](const sky& c) { return c.mode==1; }),
-                d::number("exposure", {"Brightness"}, &sky::exposure, -2.f, 2.f, "%+.1f").when([](const sky& c) { return c.mode==1; }),
-                d::number("rotation", {"Rotation"}, &sky::rotation, 0.f, 360.f, "%.0f°").when([](const sky& c) { return c.mode==1; }),
+                d::number("exposure", {"Brightness"}, &sky::exposure, modules::catalog::sky_exposure_minimum, modules::catalog::sky_exposure_maximum, "%+.1f").when([](const sky& c) { return c.mode==1; }),
+                d::number("rotation", {"Rotation"}, &sky::rotation, modules::catalog::sky_rotation_minimum, modules::catalog::sky_rotation_maximum, "%.0f°").when([](const sky& c) { return c.mode==1; }),
                 d::toggle("drift", {"Slow Rotation"}, &sky::drift).when([](const sky& c) { return c.mode==1; }),
                 d::choice("style", {"Style"}, &sky::style, styles).when([](const sky& c) { return c.mode==0; }),
-                d::number("strength", {"Strength"}, &sky::strength, 0.f, 1.f, "%.2f"),
+                d::number("strength", {"Strength"}, &sky::strength, modules::catalog::sky_strength_minimum, modules::catalog::sky_strength_maximum, "%.2f"),
                 d::color("color", {"Sky Color"}, &sky::color).when([](const sky& c) { return c.mode==0 && c.style==4; }),
                 d::toggle("match_fog", {"Match Fog"}, &sky::match_fog)
             };

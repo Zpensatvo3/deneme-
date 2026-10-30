@@ -1,6 +1,11 @@
 #pragma once
 
 #include "config_fields.hpp"
+#ifdef ONESTEP_CMAKE_BUILD
+#include <catalog_values.hpp>
+#else
+#include "../../../assets/hybrid/catalog_values.hpp"
+#endif
 #include <algorithm>
 #include <cmath>
 #include <span>

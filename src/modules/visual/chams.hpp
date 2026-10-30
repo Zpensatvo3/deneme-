@@ -2,6 +2,7 @@
 #include "../module_support.hpp"
 #include <memory>
 #include "settings/chams_settings.hpp"
+#include "../core/settings_store.hpp"
 
 namespace chams_detail { struct runtime; }
 namespace modules
@@ -18,11 +19,9 @@ namespace modules
         void on_disable(::cache&) override;
         void render_options() override;
         float get_options_height() override { return 440.f; }
-        void visit_config(config_visitor&) override;
     private:
         using settings_type = module_settings::chams;
-        settings_type settings;
-        std::mutex settings_mutex;
+        settings::store<settings_type> settings{"chams"};
         std::atomic_bool reset_requested{true};
         std::unique_ptr<chams_detail::runtime> state;
     };

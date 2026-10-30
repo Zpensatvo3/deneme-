@@ -15,11 +15,11 @@ namespace services::game::world_bridge
     bool begin_pearl(const pearl_snapshot& observed, int slot);
     bool use_pearl();
     bool release_pearl();
-    void tick_trigger(const trigger_engine::config& settings, bool active, const std::atomic<std::uint64_t>& generation);
+    void tick_trigger(bool active, const std::atomic<std::uint64_t>& generation);
     void cancel_trigger();
-    void tick_jump(const jump_reset_config::config& settings, bool active, const std::atomic<std::uint64_t>& generation);
+    void tick_jump(bool active, const std::atomic<std::uint64_t>& generation);
     void cancel_jump();
-    void tick_totem(const module_settings::auto_totem& settings, bool active,
+    void tick_totem(bool active,
         const std::atomic<std::uint64_t>& generation, std::uint64_t expected_generation);
     void cancel_totem();
     void shutdown();

@@ -31,7 +31,7 @@ def main():
             command = [compiler, "-shared", "-fPIC", *[f"-I{p}" for p in includes], str(source), "-o", str(library)]
         subprocess.run(command, cwd=work, check=True)
         classes = work / "classes"
-        subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(classes),
+        subprocess.run([javac, *[str(ROOT / "src/bridge" / (name + ".java")) for name in ("Json", "ModuleCatalog", "ModuleManager", "ConfigManager", "ManagerBridge", "GameBridge", "UtilityBridge", "ItemBridge", "InventoryBridge", "WorldBridge", "ClientTickRelay")], str(ROOT / "tests/support/ManagerTestDriver.java"), "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(classes),
                         str(ROOT / "src/bridge/WorldBridge.java"), str(ROOT / "src/bridge/ClientTickRelay.java"),
                         str(ROOT / "tests/hybrid/GLFW.java"),
                         str(ROOT / "tests/triggerbot/TriggerbotBridgeTest.java")], check=True)

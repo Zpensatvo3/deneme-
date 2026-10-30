@@ -67,8 +67,10 @@ public final class GameBridge {
         return true;
     }
     public boolean tick() throws ReflectiveOperationException {
+        var state = ManagerBridge.state().module("no_jump_delay");
+        if (!state.enabled()) return false;
         Object[] packet = capture(1);
-        return packet != null && clearJump(packet);
+        return packet != null && ManagerBridge.current("no_jump_delay", state.generation()) && clearJump(packet);
     }
     public void stop() { stopped = true; pending = 0; }
 }

@@ -23,7 +23,7 @@ namespace services::game::inventory_bridge
     };
     hybrid::result capture_container(feature operation, container_snapshot& out);
     bool container_act(const container_snapshot& observed, int action, int source, int target = -1);
-    void tick_mouse(bool active, bool right_tweak, bool left_with_item, bool left_without_item);
+    void tick_mouse();
     void cancel(feature operation); // Drops ownership only; never manufactures cleanup clicks.
     void shutdown();
 }

@@ -5,9 +5,9 @@ namespace module_settings
 {
     struct storage_esp
     {
-        bool show_labels = true;
-        bool show_distance = true;
-        int box_style = 1;
+        bool show_labels = modules::catalog::storage_esp_show_labels_default;
+        bool show_distance = modules::catalog::storage_esp_show_distance_default;
+        int box_style = modules::catalog::storage_esp_box_style_default;
         bool operator==(const storage_esp&) const = default;
         static std::span<const modules::settings::descriptor<storage_esp>> schema()
         {

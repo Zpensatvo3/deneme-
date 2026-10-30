@@ -6,9 +6,9 @@ namespace module_settings
 {
     struct mouse_tweaks
     {
-        bool right_click_tweak = true;
-        bool left_click_with_item = true;
-        bool left_click_without_item = true;
+        bool right_click_tweak = modules::catalog::mouse_tweaks_right_click_tweak_default;
+        bool left_click_with_item = modules::catalog::mouse_tweaks_left_click_with_item_default;
+        bool left_click_without_item = modules::catalog::mouse_tweaks_left_click_without_item_default;
         bool operator==(const mouse_tweaks&) const = default;
 
         static std::span<const modules::settings::descriptor<mouse_tweaks>> schema()

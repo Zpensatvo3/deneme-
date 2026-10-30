@@ -21,7 +21,6 @@ static_assert(std::string_view(decltype(maps::Camera_members::getFov)::get_signa
 static_assert(std::string_view(decltype(maps::ItemRenderLayer_members::tints)::get_signature()) == "Lit/unimi/dsi/fastutil/ints/IntList;"sv);
 static_assert(std::string_view(decltype(maps::ItemBakedQuad_members::getMaterial)::get_signature()) ==
     "()Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;"sv);
-static_assert(decltype(maps::ClientPlayerEntity_members::findCrosshairTarget)::is_method_static());
 static_assert(std::string_view(decltype(maps::ItemStack_members::getItem)::get_signature()) == "()Lnet/minecraft/world/item/Item;"sv);
 static_assert(std::string_view(decltype(maps::ItemStack_members::matchesItem)::get_signature()) == "(Ljava/lang/Object;)Z"sv);
 static_assert(std::string_view(decltype(maps::BlockState_members::matchesBlock)::get_signature()) == "(Ljava/lang/Object;)Z"sv);
@@ -61,5 +60,5 @@ int main()
     assert(!apply_item_local_transform(point, matrix) && point == original);
     matrix[15] = 1; matrix[3] = 0.5f;
     assert(!apply_item_local_transform(point, matrix) && point == original);
-    std::cout << mc::target.name << " native SDK: exact names, contracts, static ray query, bounded affine item transforms passed\n";
+    std::cout << mc::target.name << " native SDK: exact names, contracts, bounded affine item transforms passed\n";
 }

@@ -498,6 +498,9 @@
     <ClCompile Include="src\services\game\menu_input.cpp">
       <Filter>Source Files\src\services\game</Filter>
     </ClCompile>
+    <ClCompile Include="src\services\game\manager_bridge.cpp">
+      <Filter>Source Files\src\services\game</Filter>
+    </ClCompile>
     <ClCompile Include="src\services\game\hybrid_bridge.cpp">
       <Filter>Source Files\src\services\game</Filter>
     </ClCompile>
@@ -548,6 +551,9 @@
     </ClCompile>
     <ClCompile Include="src\modules\render\*.cpp">
       <Filter>Source Files\src\modules\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\core\manager.cpp">
+      <Filter>Source Files\src\modules\core</Filter>
     </ClCompile>
     <ClCompile Include="src\modules\core\module.cpp">
       <Filter>Source Files\src\modules\core</Filter>
@@ -1739,11 +1745,11 @@
     <ClInclude Include="src\modules\core\config_json.hpp">
       <Filter>Header Files\src\modules\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\core\config_migration_fields.hpp">
+    <ClInclude Include="src\modules\core\manager.hpp">
       <Filter>Header Files\src\modules\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\core\totem_config_migration.hpp">
-      <Filter>Header Files\src\modules\core</Filter>
+    <ClInclude Include="src\services\game\manager_bridge.hpp">
+      <Filter>Header Files\src\services\game</Filter>
     </ClInclude>
     <ClInclude Include="src\modules\core\module_registry.hpp">
       <Filter>Header Files\src\modules\core</Filter>

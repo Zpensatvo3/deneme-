@@ -56,7 +56,7 @@ def main():
             library_cp = os.pathsep.join(str(p.resolve()) for p in libraries)
             sources = [ROOT / "src/bridge" / (name + ".java") for name in BRIDGES]
             sources += [ROOT / "tests/BridgeCompatibilityTest.java", ROOT / "tests/SkyBridgeInstallationTest.java"]
-            subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-cp", library_cp,
+            subprocess.run([javac, *[str(ROOT / "src/bridge" / (name + ".java")) for name in ("Json", "ModuleCatalog", "ModuleManager", "ConfigManager", "ManagerBridge", "GameBridge", "UtilityBridge", "ItemBridge", "InventoryBridge", "WorldBridge", "ClientTickRelay")], str(ROOT / "tests/support/ManagerTestDriver.java"), "--release", "17", "-encoding", "UTF-8", "-g:none", "-cp", library_cp,
                             "-d", str(classes), *map(str, sources)], cwd=directory, check=True)
             for mode in ("source", "embedded"):
                 classpath = [classes] if mode == "source" else [ROOT / "assets/skybridge", classes]

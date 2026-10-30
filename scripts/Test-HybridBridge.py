@@ -24,7 +24,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="onestep-hybrid-") as work:
         bindings = write_native_bindings(Path(work) / "native-bindings.txt")
         classes = Path(work) / "classes"
-        subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(classes),
+        subprocess.run([javac, *[str(ROOT / "src/bridge" / (name + ".java")) for name in ("Json", "ModuleCatalog", "ModuleManager", "ConfigManager", "ManagerBridge", "GameBridge", "UtilityBridge", "ItemBridge", "InventoryBridge", "WorldBridge", "ClientTickRelay")], str(ROOT / "tests/support/ManagerTestDriver.java"), "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(classes),
                         str(ROOT / "src/bridge/GameBridge.java"),
                         str(ROOT / "src/bridge/UtilityBridge.java"),
                         str(ROOT / "src/bridge/ItemBridge.java"),
@@ -38,6 +38,8 @@ def main():
                         str(ROOT / "tests/hybrid/ContainerBridgeTest.java"),
                         str(ROOT / "tests/hybrid/WorldBridgeTest.java")], check=True)
         modes = [("source", str(classes))]
+        subprocess.run([shutil.which("python") or "python", str(ROOT / "scripts/Pack-ManagerCore.py"),
+                        "--classes", str(classes), "--output", str(classes / "ManagerCore.bin")], check=True)
         subprocess.run([shutil.which("python") or "python", "-X", "utf8",
                         str(ROOT / "scripts/Check-GameBridgeContracts.py"), "--classes", str(classes)], check=True)
         if not args.source_only: modes.append(("embedded", os.pathsep.join(map(str, (embedded, classes)))))
@@ -46,7 +48,7 @@ def main():
                 subprocess.run([java, "-Xcheck:jni", "-cp", cp, "net.minecraft." + test, mode], cwd=ROOT, check=True)
         named_classes = Path(work) / "utility-named"
         named_sources = sorted((ROOT / "tests/utility_named").rglob("*.java"))
-        subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(named_classes),
+        subprocess.run([javac, *[str(ROOT / "src/bridge" / (name + ".java")) for name in ("Json", "ModuleCatalog", "ModuleManager", "ConfigManager", "ManagerBridge", "GameBridge", "UtilityBridge", "ItemBridge", "InventoryBridge", "WorldBridge", "ClientTickRelay")], str(ROOT / "tests/support/ManagerTestDriver.java"), "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(named_classes),
                         str(ROOT / "src/bridge/UtilityBridge.java"), str(ROOT / "src/bridge/GameBridge.java"),
                         str(ROOT / "src/bridge/ItemBridge.java"),
                         *map(str, named_sources)], check=True)
@@ -59,7 +61,7 @@ def main():
         # Independent fixtures share intermediary names with the earlier suites.
         for folder, test in (("jump_reset", "JumpResetBridgeTest"),):
             isolated = Path(work) / folder
-            subprocess.run([javac, "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(isolated),
+            subprocess.run([javac, *[str(ROOT / "src/bridge" / (name + ".java")) for name in ("Json", "ModuleCatalog", "ModuleManager", "ConfigManager", "ManagerBridge", "GameBridge", "UtilityBridge", "ItemBridge", "InventoryBridge", "WorldBridge", "ClientTickRelay")], str(ROOT / "tests/support/ManagerTestDriver.java"), "--release", "17", "-encoding", "UTF-8", "-g:none", "-d", str(isolated),
                             str(ROOT / "src/bridge/WorldBridge.java"),
                             str(ROOT / "src/bridge/ClientTickRelay.java"),
                             str(ROOT / "tests/hybrid/GLFW.java"),

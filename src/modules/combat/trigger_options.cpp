@@ -11,7 +11,7 @@ void trigger_engine::render_options(config& settings, adapter_runtime& state, co
     config candidate = settings;
     gui::settings::render(candidate, schema());
     if (normalize(candidate) && !same_config(candidate, settings)) {
-        settings = candidate; ++state.settings_revision; request_reset(state);
+        settings = candidate; request_reset(state);
     }
     ImGui::PopID();
 }

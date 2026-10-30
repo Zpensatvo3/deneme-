@@ -6,7 +6,7 @@ namespace module_settings
 {
     struct sprint
     {
-        bool stop_while_using_item = true;
+        bool stop_while_using_item = modules::catalog::sprint_stop_while_using_item_default;
         bool operator==(const sprint&) const = default;
 
         static std::span<const modules::settings::descriptor<sprint>> schema()

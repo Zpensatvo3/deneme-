@@ -14,7 +14,7 @@ namespace gui::watermark_draw
     {
         ImFont* face = font();
         if (!face) return {};
-        const float points = 32.f * std::clamp(hud_scale, .5f, 2.f);
+        const float points = 32.f * std::clamp(watermark_settings.read().scale, .5f, 2.f);
         return { face->CalcTextSizeA(points, FLT_MAX, 0, "one").x +
             face->CalcTextSizeA(points, FLT_MAX, 0, "step").x, points };
     }
@@ -22,7 +22,7 @@ namespace gui::watermark_draw
     {
         ImFont* face = font();
         if (!list || !face) return;
-        const float scale = std::clamp(hud_scale, .5f, 2.f);
+        const float scale = std::clamp(watermark_settings.read().scale, .5f, 2.f);
         const float points = 32.f * scale;
         const float one = face->CalcTextSizeA(points, FLT_MAX, 0, "one").x;
         const ImVec2 position(std::round(x), std::round(y));

@@ -20,13 +20,8 @@ class auto_totem : public module
         void cancel_on_client_thread();
         bool render_when_disabled() const override { return true; }
         float get_options_height() override { return 420.f; }
-        void visit_config(config_visitor& v) override
-        {
-            if (settings_.visit(v, module_settings::auto_totem::schema()))
-                generation_.fetch_add(1, std::memory_order_release);
-        }
     private:
-        settings::store<module_settings::auto_totem> settings_;
+        settings::store<module_settings::auto_totem> settings_{"auto_totem"};
         std::atomic<std::uint64_t> generation_{1};
         std::atomic_bool lifecycle_reset_{false};
     };

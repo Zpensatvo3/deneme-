@@ -33,7 +33,7 @@ bool configs::keybind_profile::initialize(std::filesystem::path path)
 {
     destination = path.empty() ? default_path() : std::move(path);
     dirty = false; success = true; message = "Keybind profile ready.";
-    observed = modules::keybind_revision.load(std::memory_order_acquire);
+    observed = modules::manager::read()->keybind_revision;
     if (destination.empty()) return fail("Local app data is unavailable; keybinds cannot be saved.");
     std::error_code error;
     const auto parent = destination.parent_path();
@@ -51,16 +51,16 @@ bool configs::keybind_profile::initialize(std::filesystem::path path)
     if (!input) return fail("Cannot read the local keybind profile.");
     const std::string payload((std::istreambuf_iterator<char>(input)), {});
     if (input.bad() || !modules::apply_keybind_config(payload, message)) {
-        observed = modules::keybind_revision.load(std::memory_order_acquire);
+        observed = modules::manager::read()->keybind_revision;
         return fail("Invalid local keybind profile; existing file preserved.");
     }
-    observed = modules::keybind_revision.load(std::memory_order_acquire);
+    observed = modules::manager::read()->keybind_revision;
     return true;
 }
 
 bool configs::keybind_profile::flush(bool force)
 {
-    const auto revision = modules::keybind_revision.load(std::memory_order_acquire);
+    const auto revision = modules::manager::read()->keybind_revision;
     const auto now = std::chrono::steady_clock::now();
     if (revision != observed) { observed = revision; dirty = true; changed_at = now; }
     if (!dirty) return success;

@@ -6,10 +6,17 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <stdexcept>
 
 modules::module::module(const char* name, const char* category, const char* id)
-    : id_storage(id && *id ? id : make_stable_id(name)), name(name), category(category)
+    : enabled(this), id_storage(id && *id ? id : make_stable_id(name)), name(name), category(category)
 {
+    const auto definition = manager::find(id_storage);
+    if (!definition) throw std::runtime_error("Module is not in the Java catalog: " + id_storage);
+    // Empty labels occur only in inert UI fixtures. Production snapshots carry
+    // the canonical catalog metadata before any native engine is constructed.
+    if (!definition->name.empty()) this->name = definition->name;
+    if (!definition->category.empty()) this->category = definition->category;
 }
 
 void modules::module::run(::cache&) {}
@@ -17,30 +24,13 @@ void modules::module::on_enable(::cache&) {}
 void modules::module::on_disable(::cache&) {}
 void modules::module::render_options() {}
 
-std::string modules::module::export_config_settings() const
-{
-    return serialize_config_fields(const_cast<module&>(*this));
-}
-
-bool modules::module::apply_config_settings(const std::string& object)
-{
-    return deserialize_config_fields(*this, object);
-}
-
-bool modules::module::validate_config_settings(const std::string& object) const
-{
-    return validate_config_fields(const_cast<module&>(*this), object);
-}
-
-int modules::module::get_keybind() const { return keybind.load(std::memory_order_acquire); }
-void modules::module::set_keybind(int value) {
-    value = platform::keys::valid(value) ? value : 0;
-    if (keybind.exchange(value, std::memory_order_acq_rel) != value)
-        keybind_revision.fetch_add(1, std::memory_order_release);
+int modules::module::get_keybind() const { const auto state = manager::find(get_id()); return state ? state->keybind : 0; }
+modules::manager::result modules::module::set_keybind(int value) {
+    return manager::keybind(get_id(), value);
 }
 const char* modules::module::get_id() const { return id_storage.c_str(); }
-const char* modules::module::get_name() const { return name; }
-const char* modules::module::get_category() const { return category; }
+const char* modules::module::get_name() const { return name.c_str(); }
+const char* modules::module::get_category() const { return category.c_str(); }
 
 void modules::module::begin_keybind_capture()
 {
@@ -71,7 +61,7 @@ std::string modules::module::make_stable_id(const char* value)
 void modules::module::key_bind_selector(float width)
 {
     const bool editable = supports_keybind();
-    utils::null_string display = !editable ? "Right Shift" : (scanning ? "LISTENING" : keycode_to_string(keybind));
+    utils::null_string display = !editable ? "Right Shift" : (scanning ? "LISTENING" : keycode_to_string(get_keybind()));
     const ImVec2 button_size(std::max(1.f, width), 28.f);
     const ImVec2 button_min = ImGui::GetCursorScreenPos();
     ImGui::PushID(get_id());

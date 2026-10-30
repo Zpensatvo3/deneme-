@@ -6,9 +6,9 @@ namespace jump_reset_config
 {
     struct config
     {
-        int mode = 0; // 0 = configured game jump binding, 1 = game Space binding (legacy System Space configs).
-        int chance = 100, jump_delay_ms = 0;
-        bool only_combat = true;
+        int mode = modules::catalog::jump_reset_mode_default; // 0 = configured game jump binding, 1 = game Space binding (legacy System Space configs).
+        int chance = modules::catalog::jump_reset_chance_default, jump_delay_ms = modules::catalog::jump_reset_jump_delay_ms_default;
+        bool only_combat = modules::catalog::jump_reset_only_combat_default;
     };
     inline std::span<const modules::settings::descriptor<config>> schema()
     {
@@ -18,8 +18,8 @@ namespace jump_reset_config
         };
         static const d fields[]{
             d::choice("mode", {"Jump Input"}, &config::mode, modes),
-            d::integer("chance", {"Activation Chance"}, &config::chance, 0, 100, "%d%%"),
-            d::integer("jump_delay_ms", {"Delay after Damage"}, &config::jump_delay_ms, 0, 100, "%d ms"),
+            d::integer("chance", {"Activation Chance"}, &config::chance, modules::catalog::jump_reset_chance_minimum, modules::catalog::jump_reset_chance_maximum, "%d%%"),
+            d::integer("jump_delay_ms", {"Delay after Damage"}, &config::jump_delay_ms, modules::catalog::jump_reset_jump_delay_ms_minimum, modules::catalog::jump_reset_jump_delay_ms_maximum, "%d ms"),
             d::toggle("only_combat", {"Living Attacks Only"}, &config::only_combat)
         };
         return fields;

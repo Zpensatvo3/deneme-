@@ -98,8 +98,8 @@ void modules::watermark::render_overlay()
 	if (gui::hud_editor_active) return;
 	const ImVec2 size = gui::watermark_draw::size();
 	const ImVec2 display = ImGui::GetIO().DisplaySize;
-	const float x = std::clamp(std::round(gui::hud_pos_x), 8.f, std::max(8.f, display.x - size.x - 8.f));
-	const float y = std::clamp(std::round(gui::hud_pos_y), 8.f, std::max(8.f, display.y - size.y - 8.f));
+	const float x = std::clamp(std::round(gui::watermark_settings.read().position_x), 8.f, std::max(8.f, display.x - size.x - 8.f));
+	const float y = std::clamp(std::round(gui::watermark_settings.read().position_y), 8.f, std::max(8.f, display.y - size.y - 8.f));
 	gui::watermark_draw::draw(ImGui::GetForegroundDrawList(), x, y);
 }
 

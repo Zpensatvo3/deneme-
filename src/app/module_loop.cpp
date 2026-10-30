@@ -29,6 +29,11 @@ namespace
 
 void app::module_loop::tick(::cache& game)
 {
+    if (!modules::manager::refresh()) {
+        gui::runtime_ready.store(false, std::memory_order_release);
+        gui::should_unload.store(true, std::memory_order_release);
+        return;
+    }
     game.update();
     const bool allow_input = gameplay_input_allowed(game);
     for (modules::module* entry : modules::get_modules())

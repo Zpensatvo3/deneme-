@@ -22,9 +22,6 @@ class shield_breaker : public module
 		void render_options() override;
 		void on_disable(::cache& cache) override;
 		float get_options_height() override { return 150.0f; }
-		void visit_config(config_visitor& v) override
-		{ settings_.visit(v, module_settings::shield_breaker::schema()); }
-
 		// Runs on Minecraft's window thread before the physical click reaches
 		// GLFW, so the vanilla attack itself is performed with the axe selected.
 		static bool gate_left_click();
@@ -36,7 +33,7 @@ class shield_breaker : public module
 			const maps::ClientPlayerInteractionManager& manager, bool consumed);
 
 	private:
-        modules::settings::store<module_settings::shield_breaker> settings_;
+modules::settings::store<module_settings::shield_breaker> settings_{"shield_breaker"};
 		inline static std::atomic<shield_breaker*> active_instance{ nullptr };
 		int old_slot = -1;
 		int axe_slot = -1;

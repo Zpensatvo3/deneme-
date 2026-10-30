@@ -1,6 +1,7 @@
 #pragma once
 #include "../module_support.hpp"
 #include "vape_config.hpp"
+#include "../core/settings_store.hpp"
 #include <memory>
 
 namespace vape_bridge { struct runtime; }
@@ -19,12 +20,10 @@ namespace modules
         bool render_when_disabled() const override { return true; }
         void render_options() override;
         float get_options_height() override;
-        void visit_config(config_visitor&) override;
     private:
         using options = vape_settings::config;
-        options settings;
+        settings::store<options> settings;
         const vape_kind kind;
-        std::mutex settings_mutex;
         std::atomic_bool reset_requested{true};
         std::unique_ptr<vape_bridge::runtime> state;
         std::string runtime_issue;

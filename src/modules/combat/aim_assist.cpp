@@ -7,7 +7,7 @@ void modules::aim_assist::run(cache&)
 
 void modules::aim_assist::render_overlay()
 {
-	legit_aim_engine::run(settings, state, enabled, false);
+	legit_aim_engine::run(settings.read(), state, enabled, false);
 }
 
 void modules::aim_assist::on_enable(cache&)
@@ -22,5 +22,5 @@ void modules::aim_assist::on_disable(cache&)
 
 void modules::aim_assist::render_options()
 {
-	legit_aim_engine::render_options(settings, "aim_assist_v2");
+	settings.update([&](auto& candidate) { legit_aim_engine::render_options(candidate, "aim_assist_v2"); return true; });
 }

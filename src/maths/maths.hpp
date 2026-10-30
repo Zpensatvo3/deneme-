@@ -16,11 +16,6 @@ namespace maths
 
 		float yaw = 0.f, pitch = 0.f;
 	};
-	inline constexpr std::floating_point auto to_radians(std::floating_point auto angle)
-	{
-		constexpr double coef = std::numbers::pi / 180.0;
-		return angle * coef;
-	}
 
 	inline constexpr std::floating_point auto to_degrees(std::floating_point auto angle)
 	{

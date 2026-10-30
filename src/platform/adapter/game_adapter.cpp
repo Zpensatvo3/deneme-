@@ -7,9 +7,9 @@
 namespace platform::adapter
 {
     // =========================================================================
-    // Base Version Adapter (Shared helpers & fallbacks)
+    // Each binary uses one mapping profile, selected at compile time.
     // =========================================================================
-    class base_adapter : public IGameAdapter
+    class target_adapter final : public IGameAdapter
     {
     public:
         maps::Box get_bounding_box(jobject entity_obj) const override
@@ -472,20 +472,6 @@ namespace platform::adapter
             return data;
         }
 
-    };
-
-    // Each binary uses one mapping profile, selected at compile time.
-    class target_adapter final : public base_adapter
-    {
-    public:
-        mc::version get_version() const override { return mc::target.id; }
-        const char* get_version_name() const override { return mc::target.name.data(); }
-        maps::HitResult crosshair_target(const maps::MinecraftClient& client,
-            const maps::ClientPlayerEntity& player, const maps::Entity& camera,
-            double block_range, double entity_range, float delta) const override
-        {
-            return player.findCrosshairTarget.call(camera, block_range, entity_range, delta);
-        }
     };
 
     static target_adapter active_adapter;

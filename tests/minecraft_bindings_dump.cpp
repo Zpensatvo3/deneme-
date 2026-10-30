@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     B(maps::ItemRenderLayer, getQuads); B(maps::ItemRenderLayer, transform); B(maps::ItemRenderLayer, useLight);
     B(maps::ItemTransformation, rotation); B(maps::ItemTransformation, translation); B(maps::ItemTransformation, scale);
     binding<maps::Input, decltype(maps::Input_members::axis::vector)>();
-    B(maps::ClientPlayerEntity, findCrosshairTarget); B(maps::Mouse, onMouseInput);
+    B(maps::Mouse, onMouseInput);
     B(maps::MouseInput, constructor); B(maps::SkinTextures, body); B(maps::SkinTextureAsset, texturePath);
     B(maps::ItemBakedQuad, getPosition); B(maps::ItemBakedQuad, getTexcoords);
     B(maps::PackedUv, getX); B(maps::PackedUv, getY);

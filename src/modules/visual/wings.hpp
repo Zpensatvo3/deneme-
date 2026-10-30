@@ -19,9 +19,8 @@ namespace modules
         void on_render_shutdown() override { motion_.clear(); }
         void render_options() override;
         float get_options_height() override { return 460.f; }
-        void visit_config(config_visitor& visitor) override { settings_.visit(visitor, module_settings::wings::schema()); }
     private:
-        modules::settings::store<module_settings::wings> settings_;
+modules::settings::store<module_settings::wings> settings_{"wings"};
         cosmetics::cape_motion motion_;
         std::atomic<unsigned> reset_{0};
         unsigned applied_=0;

@@ -12,12 +12,16 @@ void modules::triggerbot::run(::cache&)
 
 void modules::triggerbot::render_overlay()
 {
-	trigger_engine::run_overlay(settings, state, enabled);
+	trigger_engine::run_overlay(state, enabled);
 }
 
 void modules::triggerbot::render_options()
 {
-	trigger_engine::render_options(settings, state, "triggerbot_settings");
+	settings.update([&](auto& candidate) {
+	    auto previous = candidate;
+	    trigger_engine::render_options(candidate, state, "triggerbot_settings");
+	    return !trigger_engine::same_config(previous, candidate);
+	});
 }
 
 void modules::triggerbot::on_disable(::cache&)

@@ -21,8 +21,6 @@ namespace platform::adapter
     {
     public:
         virtual ~IGameAdapter() = default;
-        virtual mc::version get_version() const = 0;
-        virtual const char* get_version_name() const = 0;
 
         // Bounding box & Position raw / jobject
         virtual maps::Box get_bounding_box(jobject entity_obj) const = 0;
@@ -91,11 +89,6 @@ namespace platform::adapter
         // World & entities
         virtual maps::List get_players(const maps::ClientWorld& world) const = 0;
         virtual maps::Iterable get_entities(const maps::ClientWorld& world) const = 0;
-
-        // Movement & combat checks
-        virtual maps::HitResult crosshair_target(const maps::MinecraftClient& client,
-            const maps::ClientPlayerEntity& player, const maps::Entity& camera,
-            double block_range, double entity_range, float delta) const = 0;
     };
 
     IGameAdapter& get();

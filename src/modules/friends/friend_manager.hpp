@@ -9,7 +9,6 @@ class friend_manager : public module
 	public:
 		friend_manager() : module("friends manager", "Friends")
 		{
-			enabled = true;
 			display_options = true;
 		}
 

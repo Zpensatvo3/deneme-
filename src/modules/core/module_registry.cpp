@@ -27,17 +27,12 @@ bool modules::register_module(module* entry)
     return true;
 }
 
-void modules::register_modules(std::initializer_list<module*> entries)
-{
-    for (module* entry : entries)
-        register_module(entry);
-}
 
 void modules::clear_modules(::cache& cache)
 {
     for (module* current : registered_modules)
     {
-        if (current && (current->enabled || current->prev_enabled) && cache.is_valid())
+        if (current && (current->enabled || current->lifecycle_active()) && cache.is_valid())
             stop_module(*current, cache);
         delete current;
     }

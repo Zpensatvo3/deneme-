@@ -34,6 +34,7 @@ __pycache__/
 *.orig
 *.tmp
 *.vmp
+/assets/hybrid/manager_build.stamp
 *-bytes.txt
 *-disassembly.txt
 

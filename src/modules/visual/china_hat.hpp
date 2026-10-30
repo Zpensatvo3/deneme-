@@ -13,8 +13,7 @@ namespace modules
         void render_overlay() override;
         void render_options() override;
         float get_options_height() override { return 366.f; }
-        void visit_config(config_visitor& visitor) override { settings_.visit(visitor, module_settings::china_hat::schema()); }
     private:
-        modules::settings::store<module_settings::china_hat> settings_;
+modules::settings::store<module_settings::china_hat> settings_{"china_hat"};
     };
 }

@@ -148,9 +148,13 @@ public final class UtilityBridge {
         return client != null && yes(onThread, client) ? client : null;
     }
 
-    public void update(int feature, boolean active, int value, boolean physicalUseHeld)
+    public void update(int feature, boolean physicalUseHeld)
             throws ReflectiveOperationException {
         validate(feature);
+        var state = ManagerBridge.state().module(feature == FAST_PLACE ? "fast_place" : feature == SPRINT ? "sprint" : "full_bright");
+        boolean active = state.enabled();
+        int value = feature == FAST_PLACE ? ManagerBridge.integer(state, "delay") :
+            feature == SPRINT && ManagerBridge.flag(state, "stop_while_using_item") ? 1 : 0;
         if (stopped) return;
         if (!active) { release(feature); return; }
         prepare(feature);

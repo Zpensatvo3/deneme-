@@ -2,6 +2,7 @@
 #include "../module_support.hpp"
 #include "trigger_adapter.hpp"
 #include "trigger_config.hpp"
+#include "../core/settings_store.hpp"
 
 namespace modules
 {
@@ -19,15 +20,8 @@ namespace modules
         void on_enable(::cache&) override;
         void on_disable(::cache&) override;
         float get_options_height() override { return 340.f; }
-        void visit_config(config_visitor& visitor) override
-        {
-            if (trigger_engine::visit_config(visitor, settings)) {
-                ++state.settings_revision;
-                trigger_engine::request_reset(state);
-            }
-        }
     private:
-        trigger_engine::config settings{};
+        settings::store<trigger_engine::config> settings{"triggerbot", trigger_engine::schema()};
         trigger_engine::adapter_runtime state{};
     };
 }

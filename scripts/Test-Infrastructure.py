@@ -50,16 +50,15 @@ def validate_settings():
     path = ROOT / "src/modules/settings_manifest.json"
     manifest = json.loads(path.read_text(encoding="utf-8"))
     entries = manifest["modules"]
-    catalog = (ROOT / "src/modules/module_catalog.cpp").read_text(encoding="utf-8")
-    ids = re.findall(r'\{\s*"([a-z0-9_]+)"\s*,\s*&', catalog)
+    catalog = (ROOT / "src/bridge/ModuleCatalog.java").read_text(encoding="utf-8")
+    ids = re.findall(r'^\s*m\("([a-z0-9_]+)"', catalog, re.M)
     covered = [entry["id"] for entry in entries]
-    if manifest.get("version") != 1 or len(covered) != len(set(covered)) or set(covered) != set(ids):
+    if manifest.get("version") != 2 or manifest.get("authority") != "src/bridge/ModuleCatalog.java" or len(covered) != len(set(covered)) or set(covered) != set(ids):
         errors.append("Settings manifest must cover each catalog ID exactly once")
     no_config = {"friends_manager", "click_gui", "panic", "full_bright", "no_jump_delay"}
     if {e["id"] for e in entries if e["model"] is None} != no_config:
         errors.append("Unexpected modules without settings models")
-    allowed = {"no_module_settings", "snapshot_store", "existing_lock", "revisioned_lock",
-               "client_thread_config", "existing_runtime", "render_preferences"}
+    allowed = {"no_module_settings", "java_manager_view"}
     inspected = set()
     for entry in entries:
         if entry["ownership"] not in allowed:
@@ -148,7 +147,8 @@ def validate_anti_bot():
     errors = []
     owner = (ROOT / "src/modules/combat/anti_bot.cpp").read_text(encoding="utf-8")
     model = (ROOT / "src/modules/combat/settings/anti_bot_settings.hpp").read_text(encoding="utf-8")
-    if "anti_bot_default_enabled = true" not in model or "enabled = module_settings::anti_bot_default_enabled" not in owner:
+    catalog = (ROOT / "src/bridge/ModuleCatalog.java").read_text(encoding="utf-8")
+    if not re.search(r'm\("anti_bot",\s*"anti bot",\s*"Client",\s*true,', catalog) or "enabled =" in owner:
         errors.append("AntiBot must default on without overriding imported module state")
     consumers = {
         "modules/combat/legit_aim_engine.cpp": 1, "modules/combat/blatant_aim_engine.cpp": 2,
@@ -235,8 +235,8 @@ def validate():
     for path in sorted(active_sources - compiled):
         errors.append(f"Source missing from build: {path.relative_to(ROOT)}")
 
-    catalog = (ROOT / "src/modules/module_catalog.cpp").read_text(encoding="utf-8")
-    ids = re.findall(r'\{\s*"([a-z0-9_]+)"\s*,\s*&', catalog)
+    catalog = (ROOT / "src/bridge/ModuleCatalog.java").read_text(encoding="utf-8")
+    ids = re.findall(r'^\s*m\("([a-z0-9_]+)"', catalog, re.M)
     if not ids or len(ids) != len(set(ids)):
         errors.append("Module catalog IDs must be nonempty and unique")
     vape = {entry for entry in ids if entry.startswith("vape_")}
@@ -275,10 +275,10 @@ def validate():
             for include in re.findall(r'^\s*#include\s*"([^"]+)"', path.read_text(encoding="utf-8"), re.M):
                 if not (path.parent / include).is_file():
                     errors.append(f"Broken migrated module include: {path.relative_to(ROOT)}: {include}")
-        if "settings_.visit" not in header.read_text(encoding="utf-8"):
-            errors.append(f"Module config bypasses shared settings: {name}")
+        if 'settings_' not in header.read_text(encoding="utf-8") or 'visit_config(' in header.read_text(encoding="utf-8"):
+            errors.append(f"Module must expose a Java-owned settings view only: {name}")
         content = source.read_text(encoding="utf-8")
-        if "settings_.read()" not in content or "gui::settings::render(settings_," not in content:
+        if (name not in ("fast_exp", "fast_place", "sprint") and "settings_.read()" not in content) or "gui::settings::render(settings_," not in content:
             errors.append(f"Module must use settings snapshots and common UI: {name}")
     for path in [*(ROOT / "src/app").rglob("*.cpp"), *(ROOT / "src/app").rglob("*.hpp"), ROOT / "src/platform/jni/jvm_session.cpp"]:
         for include in re.findall(r'^\s*#include\s*"([^"]+)"', path.read_text(encoding="utf-8"), re.M):

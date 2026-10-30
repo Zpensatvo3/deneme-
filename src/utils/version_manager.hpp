@@ -9,7 +9,6 @@ namespace mc
 {
     version get_version();
     const char* get_version_name();
-    const char* get_runtime_label();
 
     // Reads Fabric metadata; unknown versions never select a supported target.
     version detect(JNIEnv* env, jvmti* jvmti_env);

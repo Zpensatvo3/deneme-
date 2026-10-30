@@ -6,10 +6,10 @@ namespace module_settings
 {
     struct pot_refill
     {
-        int delay_ms = 100;
-        bool random_delay = false;
-        int max_delay_ms = 160;
-        int slot_order = 0;
+        int delay_ms = modules::catalog::pot_refill_delay_ms_default;
+        bool random_delay = modules::catalog::pot_refill_random_delay_default;
+        int max_delay_ms = modules::catalog::pot_refill_max_delay_ms_default;
+        int slot_order = modules::catalog::pot_refill_slot_order_default;
         bool operator==(const pot_refill&) const = default;
 
         static std::span<const modules::settings::descriptor<pot_refill>> schema()
@@ -21,9 +21,9 @@ namespace module_settings
                 {"Random"}
             };
             static const setting fields[]{
-                setting::integer("delay_ms", {"Refill Delay"}, &model::delay_ms, 50, 1000, "%d ms"),
+                setting::integer("delay_ms", {"Refill Delay"}, &model::delay_ms, modules::catalog::pot_refill_delay_ms_minimum, modules::catalog::pot_refill_delay_ms_maximum, "%d ms"),
                 setting::toggle("random_delay", {"Variable Delay"}, &model::random_delay),
-                setting::integer("max_delay_ms", {"Maximum Delay"}, &model::max_delay_ms, 50, 1000, "%d ms", &model::delay_ms)
+                setting::integer("max_delay_ms", {"Maximum Delay"}, &model::max_delay_ms, modules::catalog::pot_refill_max_delay_ms_minimum, modules::catalog::pot_refill_max_delay_ms_maximum, "%d ms", &model::delay_ms)
                     .when([](const model& s) { return s.random_delay; }),
                 setting::choice("slot_order", {"Slot Order"}, &model::slot_order, orders),
             };

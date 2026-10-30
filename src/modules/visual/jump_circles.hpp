@@ -16,9 +16,8 @@ namespace modules
         void on_render_shutdown() override { state_.clear(); }
         void render_options() override;
         float get_options_height() override { return 360.f; }
-        void visit_config(config_visitor& v) override { settings_.visit(v, module_settings::jump_circles::schema()); }
     private:
-        modules::settings::store<module_settings::jump_circles> settings_;
+modules::settings::store<module_settings::jump_circles> settings_{"jump_circles"};
         cosmetics::visual_effect_state state_;
         std::atomic<unsigned> reset_{0};
         unsigned applied_ = 0;

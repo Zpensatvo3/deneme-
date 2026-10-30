@@ -8,8 +8,6 @@ namespace platform::jni_context
     // knows that thread. It deliberately does not attach arbitrary workers.
     bool bind_current_thread();
 
-    JNIEnv* current_env();
-
     // Returns true when a pending Java exception was found and cleared.
     bool clear_exception();
 }

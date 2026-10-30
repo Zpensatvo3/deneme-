@@ -55,7 +55,7 @@ namespace
             prepare_method = checked(env, env->GetMethodID(type, "prepare", "(I)V"));
             container_capture_method = checked(env, env->GetMethodID(type, "captureContainer", "(I)[Ljava/lang/Object;"));
             container_act_method = checked(env, env->GetMethodID(type, "containerAct", "([Ljava/lang/Object;IIIZZZ)Z"));
-            mouse_tick_method = checked(env, env->GetMethodID(type, "tickMouse", "(ZZZZ)V"));
+            mouse_tick_method = checked(env, env->GetMethodID(type, "tickMouse", "()V"));
             cancel_method = checked(env, env->GetMethodID(type, "cancel", "(I)V"));
             stop_method = checked(env, env->GetMethodID(type, "stop", "()V"));
             auto instance = checked(env, env->NewObject(type, constructor, parent, static_cast<jint>(mc::target.build_id)));
@@ -149,7 +149,7 @@ bool services::game::inventory_bridge::container_act(const container_snapshot& o
     return applied;
 }
 
-void services::game::inventory_bridge::tick_mouse(bool active, bool right_tweak, bool left_with_item, bool left_without_item)
+void services::game::inventory_bridge::tick_mouse()
 {
     if constexpr (mc::target.build_id != 12111) return;
     if (suspended[static_cast<unsigned>(feature::mouse)]) return;
@@ -159,9 +159,7 @@ void services::game::inventory_bridge::tick_mouse(bool active, bool right_tweak,
     }
     if (!connect(jni::get_env())) return;
     auto env = jni::get_env();
-    env->CallVoidMethod(bridge, mouse_tick_method, static_cast<jboolean>(active),
-        static_cast<jboolean>(right_tweak), static_cast<jboolean>(left_with_item),
-        static_cast<jboolean>(left_without_item));
+    env->CallVoidMethod(bridge, mouse_tick_method);
     if (platform::jni_context::clear_exception()) {
         suspended[static_cast<unsigned>(feature::mouse)] = true;
         cancel(feature::mouse);

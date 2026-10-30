@@ -123,7 +123,6 @@
     "ClientChunkMap": "net/minecraft/class_631$class_3681",
     "ClientChunkManager": "net/minecraft/class_631",
     "World": "net/minecraft/class_1937",
-    "WorldProperties": "net/minecraft/class_638$class_5271",
     "Direction": "net/minecraft/class_2350",
     "Packet": "net/minecraft/class_2596",
     "GameProfile": "com/mojang/authlib/GameProfile",

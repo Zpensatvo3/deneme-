@@ -15,10 +15,7 @@ namespace modules
         void render_options() override;
         bool render_when_disabled() const override { return true; }
         float get_options_height() override { return 140.0f; }
-        void visit_config(config_visitor& visitor) override
-        { settings_.visit(visitor, module_settings::fast_exp::schema()); }
-
     private:
-        modules::settings::store<module_settings::fast_exp> settings_;
+modules::settings::store<module_settings::fast_exp> settings_{"fast_exp"};
     };
 }

@@ -14,8 +14,7 @@ namespace modules
         void on_disable(::cache&) override;
         void render_options() override;
         float get_options_height() override { return 220.f; }
-        void visit_config(config_visitor& v) override { settings_.visit(v, module_settings::anti_bot::schema()); }
     private:
-        modules::settings::store<module_settings::anti_bot> settings_;
+modules::settings::store<module_settings::anti_bot> settings_{"anti_bot"};
     };
 }

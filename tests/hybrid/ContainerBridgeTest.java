@@ -58,53 +58,53 @@ public final class ContainerBridgeTest {
         class_1792 item = new class_1792();
         h.carried = new class_1799(item); h.carried.stackCount = 8;
         slot(c, 0).stack = new class_1799(null);
-        b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         org.lwjgl.glfw.GLFW.buttons[1] = 1;
-        b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 0, "RMB starts without duplicating vanilla initial click");
         ((class_465)c.field_1755).field_2787 = slot(c, 1);
-        b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(h.carried.stackCount == 6 && slot(c, 0).stack.stackCount == 1 && slot(c, 1).stack.stackCount == 1,
             "Java RMB leaves one in original and hovered slots immediately");
         ((class_465)c.field_1755).field_2787 = slot(c, 0);
-        b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(h.carried.stackCount == 5 && slot(c, 0).stack.stackCount == 2, "RMB revisits are not throttled or deduplicated");
         org.lwjgl.glfw.GLFW.buttons[1] = 0;
         int before = c.field_1761.inventoryClicks;
-        ((class_465)c.field_1755).field_2787 = slot(c, 2); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 2); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == before, "physical RMB release ends dragging");
 
         c = setup(); b = bridge(); h = c.field_1724.field_7512;
-        b.tickMouse(true, true, true, true);
-        org.lwjgl.glfw.GLFW.buttons[1] = 1; b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
+        org.lwjgl.glfw.GLFW.buttons[1] = 1; net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         // Vanilla picks up half only after the initial empty-cursor right press.
         h.carried = new class_1799(item); h.carried.stackCount = 4;
-        ((class_465)c.field_1755).field_2787 = slot(c, 1); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 1); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 0, "vanilla half-stack pickup is not converted into RMB drag");
 
         c = setup(); b = bridge(); h = c.field_1724.field_7512;
         slot(c, 0).stack = new class_1799(item); slot(c, 0).stack.stackCount = 3;
         slot(c, 1).stack = new class_1799(item); slot(c, 1).stack.stackCount = 5;
-        b.tickMouse(true, true, true, true);
-        org.lwjgl.glfw.GLFW.buttons[0] = 1; b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
+        org.lwjgl.glfw.GLFW.buttons[0] = 1; net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         h.carried = slot(c, 0).stack; slot(c, 0).stack = new class_1799(null); // Vanilla initial pickup.
-        ((class_465)c.field_1755).field_2787 = slot(c, 1); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 1); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 2 && h.carried.stackCount == 8 && slot(c, 1).stack.method_7960(),
             "Java LMB merges and returns a matching stack with two clicks");
         slot(c, 2).stack = new class_1799(item); slot(c, 2).stack.stackCount = 60;
-        ((class_465)c.field_1755).field_2787 = slot(c, 2); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 2); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 2, "whole-stack merge capacity enforced");
         slot(c, 3).stack = new class_1799(item); slot(c, 3).stack.stackCount = 2; slot(c, 3).insertable = false;
-        ((class_465)c.field_1755).field_2787 = slot(c, 3); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 3); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 3 && h.carried.stackCount == 10, "output slot collection uses one click");
         slot(c, 4).stack = new class_1799(item); org.lwjgl.glfw.GLFW.keys[340] = 1;
-        ((class_465)c.field_1755).field_2787 = slot(c, 4); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 4); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 4 && slot(c, 4).stack.method_7960(), "shift drag quick-moves matching stacks");
         c.field_1687 = new class_638(); slot(c, 5).stack = new class_1799(item);
-        ((class_465)c.field_1755).field_2787 = slot(c, 5); b.tickMouse(true, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 5); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 4, "world identity change clears the drag gesture");
-        b.tickMouse(false, true, true, true);
-        ((class_465)c.field_1755).field_2787 = slot(c, 6); b.tickMouse(true, true, true, true);
+        net.onestep.hybrid.ManagerTestDriver.mouse(b,false, true, true, true);
+        ((class_465)c.field_1755).field_2787 = slot(c, 6); net.onestep.hybrid.ManagerTestDriver.mouse(b,true, true, true, true);
         check(c.field_1761.inventoryClicks == 4, "disabled controller releases its gesture without clicks");
         c = setup(); b = bridge(); p = b.captureContainer(4); c.field_1761.failInventory = true;
         boolean failed = false;
@@ -121,7 +121,7 @@ public final class ContainerBridgeTest {
         }, 12111);
         failed = false;
         try { isolated.prepare(4); } catch (ClassNotFoundException expected) { failed = true; }
-        isolated.prepare(5); isolated.tickMouse(true, true, true, true);
+        isolated.prepare(5); net.onestep.hybrid.ManagerTestDriver.mouse(isolated,true, true, true, true);
         check(failed && c.field_1761.inventoryClicks == 0, "refill binding failure isolated from mouse controller");
         System.out.println("PASS container bridge: " + checks + " checks (" + args[0] + ")");
     }

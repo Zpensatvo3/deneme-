@@ -9,7 +9,6 @@ void modules::jump_reset::run(::cache&) {}
 
 void modules::jump_reset::request_reset()
 {
-    std::lock_guard lock(settings_mutex);
     reset_generation.fetch_add(1, std::memory_order_release);
 }
 void modules::jump_reset::on_enable(::cache&) { request_reset(); }
@@ -21,23 +20,16 @@ void modules::jump_reset::cancel_on_client_thread()
 void modules::jump_reset::render_overlay()
 {
     // Java owns game reads, damage decisions, timing and binding cleanup.
-    // Serialize settings publication with dispatch. Java checks the cancellation
-    // generation again immediately before writing the game binding.
-    std::lock_guard lock(settings_mutex);
-    services::game::world_bridge::tick_jump(settings, enabled, reset_generation);
+    // No native settings lock is held across JNI/game callbacks.
+    services::game::world_bridge::tick_jump(enabled, reset_generation);
 }
 jump_reset_config::config modules::jump_reset::settings_snapshot()
 {
-    std::lock_guard lock(settings_mutex); return settings;
+    return settings.read();
 }
-void modules::jump_reset::apply_settings(jump_reset_config::config candidate, bool force_reset)
+void modules::jump_reset::apply_settings(jump_reset_config::config candidate)
 {
-    if (!jump_reset_config::normalize(candidate)) return;
-    std::lock_guard lock(settings_mutex);
-    if (force_reset || !jump_reset_config::same_config(candidate, settings)) {
-        settings = candidate;
-        reset_generation.fetch_add(1, std::memory_order_release);
-    }
+    if (settings.update([&](auto& current) { current = candidate; return true; })) request_reset();
 }
 
 void modules::jump_reset::render_options()

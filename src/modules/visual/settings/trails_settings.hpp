@@ -5,10 +5,10 @@ namespace module_settings
 {
     struct trails
     {
-        int mode = 2;
-        float lifetime = 2.5f, density = 1.f, size = 1.f, opacity = .8f;
-        bool theme_color = true, glow = true;
-        float color[4]{.65f,.40f,1.f,1.f};
+        int mode = modules::catalog::trails_mode_default;
+        float lifetime = modules::catalog::trails_lifetime_default, density = modules::catalog::trails_density_default, size = modules::catalog::trails_size_default, opacity = modules::catalog::trails_opacity_default;
+        bool theme_color = modules::catalog::trails_theme_color_default, glow = modules::catalog::trails_glow_default;
+        float color[4]{modules::catalog::trails_color_default[0], modules::catalog::trails_color_default[1], modules::catalog::trails_color_default[2], modules::catalog::trails_color_default[3]};
         bool operator==(const trails&) const = default;
         static std::span<const modules::settings::descriptor<trails>> schema()
         {
@@ -18,10 +18,10 @@ namespace module_settings
             };
             static const d fields[]{
                 d::choice("mode", {"Trail"}, &trails::mode, modes),
-                d::number("lifetime", {"Lifetime"}, &trails::lifetime, .5f, 5.f, "%.1f s"),
-                d::number("density", {"Particle Density"}, &trails::density, .5f, 2.f, "%.1fx").when([](const trails& c) { return c.mode!=1; }),
-                d::number("size", {"Size"}, &trails::size, .5f, 1.5f, "%.2fx"),
-                d::number("opacity", {"Opacity"}, &trails::opacity, .1f, 1.f, "%.2f"),
+                d::number("lifetime", {"Lifetime"}, &trails::lifetime, modules::catalog::trails_lifetime_minimum, modules::catalog::trails_lifetime_maximum, "%.1f s"),
+                d::number("density", {"Particle Density"}, &trails::density, modules::catalog::trails_density_minimum, modules::catalog::trails_density_maximum, "%.1fx").when([](const trails& c) { return c.mode!=1; }),
+                d::number("size", {"Size"}, &trails::size, modules::catalog::trails_size_minimum, modules::catalog::trails_size_maximum, "%.2fx"),
+                d::number("opacity", {"Opacity"}, &trails::opacity, modules::catalog::trails_opacity_minimum, modules::catalog::trails_opacity_maximum, "%.2f"),
                 d::toggle("theme_color", {"Theme Color"}, &trails::theme_color),
                 d::color("color", {"Color"}, &trails::color).when([](const trails& c) { return !c.theme_color; }),
                 d::toggle("glow", {"Glow"}, &trails::glow)

@@ -349,8 +349,6 @@ int run()
     assert(std::string(short_text) == "ab");
     model::copy_utf8(short_text, "a\xc4\xb1" "c");
     assert(std::string(short_text) == "a\xc4\xb1");
-    assert(model::date("2026-10-13T12:00:00") == "2026-10-13");
-    assert(model::date("") == "--");
     std::puts("Config collection, description search, sorting, trim and UTF-8 boundary checks passed.");
     return 0;
 }

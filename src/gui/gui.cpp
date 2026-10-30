@@ -364,10 +364,11 @@ void gui::render_theme_selection()
 
 void gui::request_panic()
 {
-	for (modules::module* module : modules::get_modules())
-		module->enabled = false;
 	gui::draw = false;
+	gui::runtime_ready.store(false, std::memory_order_release);
 	gui::should_unload = true;
+	// Native permission gates close before any Java request can wait on a JVM.
+	modules::manager::disable_all();
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -897,7 +898,7 @@ static BOOL WINAPI detour_wglSwapBuffers(HDC device)
 		for (modules::module* module : modules::get_modules())
 		{
 			if (module->enabled || module->render_when_disabled())
-				module->render_overlay();
+				module->render_managed_overlay();
 		}
 	}
 	else
